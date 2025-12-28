@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏃 PyTorch Tensor Marathon</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo" id="home-logo" style="cursor: pointer;">🏃 <span data-i18n="app_title">PyTorch Tensor
+                    Marathon</span></h1>
+            <div class="header-controls">
+                <div class="stats-badge">
+                    <span class="stat-item"><span id="solved-count">0</span>/<span id="total-count">100</span></span>
+                </div>
+                <button type="button" class="reset-btn" id="reset-progress" title="Reset Progress">🔄</button>
+                <button class="icon-btn" id="theme-toggle" title="Switch Theme" style="margin-right: 0.5rem;">
+                    🌙
+                </button>
+                <select id="lang-selector" class="lang-selector">
+                    <option value="en" selected>🇬🇧 English</option>
+                    <option value="ja">🇯🇵 日本語</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2 data-i18n="categories">📁 Categories</h2>
+            </div>
+            <nav class="category-list" id="category-list">
+                <!-- Categories will be loaded here -->
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Welcome Screen -->
+            <div class="welcome-screen" id="welcome-screen">
+                <div class="welcome-card">
+                    <h2 class="welcome-title" data-i18n="welcome">Welcome to Tensor Marathon!</h2>
+                    <p class="welcome-subtitle" data-i18n="welcome_subtitle">Master PyTorch tensor operations with 100
+                        curated problems</p>
+                    <!-- Instructions -->
+                    <div class="instructions-section">
+                        <h3 data-i18n="how_to_use">📚 How to Use</h3>
+                        <div class="instructions-grid">
+                            <div class="instruction-item">
+                                <span class="instruction-number">1</span>
+                                <p data-i18n="instruction_1">Select a category from the sidebar</p>
+                            </div>
+                            <div class="instruction-item">
+                                <span class="instruction-number">2</span>
+                                <p data-i18n="instruction_2">Choose a problem from the list</p>
+                            </div>
+                            <div class="instruction-item">
+                                <span class="instruction-number">3</span>
+                                <p data-i18n="instruction_3">Write your solution code</p>
+                            </div>
+                            <div class="instruction-item">
+                                <span class="instruction-number">4</span>
+                                <p data-i18n="instruction_4">Click "Run" to check your answer</p>
+                            </div>
+                        </div>
+
+                        <div class="rules-box">
+                            <h4 data-i18n="important_rules">⚠️ Important Rules</h4>
+                            <ul>
+                                <li><span data-i18n="rule_1">Always assign your result to the variable
+                                        <code>result</code></span></li>
+                                <li data-i18n="rule_2">Your code will be checked for both shape and values</li>
+                                <li data-i18n="rule_3">Use the "Hint" button if you're stuck</li>
+                                <li data-i18n="rule_4">Progress is saved automatically in your browser</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="total-problems">100</div>
+                            <div class="stat-label" data-i18n="total_problems">Total Problems</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">8</div>
+                            <div class="stat-label" data-i18n="categories_count">Categories</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="user-progress">0%</div>
+                            <div class="stat-label" data-i18n="your_progress">Your Progress</div>
+                        </div>
+                    </div>
+                    <p class="welcome-instruction" data-i18n="select_category_instruction">👈 Select a category from the
+                        sidebar to begin</p>
+                </div>
+            </div>
+
+            <!-- Problem List View -->
+            <div class="problem-list-view hidden" id="problem-list-view">
+                <div class="problem-list-header">
+                    <h2 id="category-title"></h2>
+                    <div class="difficulty-filter">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="beginner">Beginner</button>
+                        <button class="filter-btn" data-filter="intermediate">Intermediate</button>
+                        <button class="filter-btn" data-filter="advanced">Advanced</button>
+                        <button class="filter-btn" data-filter="expert">Expert</button>
+                    </div>
+                </div>
+                <div class="problem-grid" id="problem-grid">
+                    <!-- Problems will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Problem Detail View -->
+            <div class="problem-detail-view hidden" id="problem-detail-view">
+                <div class="problem-header">
+                    <button class="back-btn" id="back-to-list">← <span data-i18n="back">Back to List</span></button>
+                    <div class="problem-meta">
+                        <span class="problem-id" id="problem-id"></span>
+                        <span class="difficulty-badge" id="problem-difficulty"></span>
+                    </div>
+                </div>
+
+                <div class="problem-content">
+                    <h2 class="problem-title" id="problem-title"></h2>
+                    <p class="problem-description" id="problem-description"></p>
+
+                    <!-- Setup Code -->
+                    <div class="code-section">
+                        <div class="code-header">
+                            <span data-i18n="setup_code">📝 Setup Code</span>
+                        </div>
+                        <pre><code class="language-python" id="setup-code"></code></pre>
+                    </div>
+
+                    <!-- User Code Input -->
+                    <div class="code-section">
+                        <div class="code-header">
+                            <span data-i18n="your_solution">💻 Your Solution</span>
+                            <div class="code-actions">
+                                <button class="hint-btn" id="hint-btn">💡 <span data-i18n="hint">Hint</span></button>
+                            </div>
+                        </div>
+                        <div class="hint-box hidden" id="hint-box"></div>
+                        <textarea class="code-editor" id="user-code"
+                            placeholder="# Write your solution here&#10;# result = ..." spellcheck="false"></textarea>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="run-btn">
+                            <span class="btn-icon">▶</span>
+                            <span data-i18n="run">Run</span>
+                        </button>
+                        <button class="btn btn-secondary" id="solution-btn">
+                            <span class="btn-icon">📖</span>
+                            <span data-i18n="show_solution">Show Solution</span>
+                        </button>
+                        <!-- AI Features -->
+                        <div class="ai-features" style="margin-top: 1rem;">
+
+                            <button class="btn btn-ai gemini-feature" id="explain-btn" style="display: none;"
+                                onclick="explainSolution()">
+                                <span class="btn-icon">🤖</span>
+                                <span data-i18n="ai_explain">AI Explanation</span>
+                            </button>
+                            <button class="btn btn-ai gemini-feature" id="ai-hint-btn" style="display: none;"
+                                onclick="getAIHint()">
+                                <span class="btn-icon">💡</span>
+                                <span data-i18n="ai_hint">AI Hint</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Result Display -->
+                    <div class="result-box hidden" id="result-box">
+                        <div class="result-icon"></div>
+                        <div class="result-content">
+                            <div class="result-title"></div>
+                            <div class="result-message"></div>
+
+                            <!-- Execution Output -->
+                            <div class="execution-output hidden" id="execution-output"
+                                style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;">
+                                <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Output:
+                                </div>
+                                <pre
+                                    style="background: rgba(0,0,0,0.3) !important; font-family: 'Courier New', monospace; font-size: 0.9rem;"><code id="output-text"></code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Solution Display -->
+                    <div class="solution-box hidden" id="solution-box">
+                        <div class="code-header">
+                            <span data-i18n="expected_solution">✅ Expected Solution</span>
+                        </div>
+                        <pre><code class="language-python" id="solution-code"></code></pre>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="problem-navigation">
+                    <button class="nav-btn" id="prev-problem">
+                        <span>←</span> <span data-i18n="previous">Previous</span>
+                    </button>
+                    <button class="nav-btn" id="next-problem">
+                        <span data-i18n="next">Next</span> <span>→</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loading-overlay">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="/static/i18n.js"></script>
+    <script src="/static/app.js"></script>
+</body>
+
+</html>
+
+<!-- Settings Modal for API Key -->
+<div class="modal hidden" id="settings-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>⚙️ Settings</h3>
+            <button class="modal-close" onclick="closeSettings()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="setting-item">
+                <label for="gemini-api-key-input">Gemini API Key (Optional)</label>
+                <p class="setting-description">
+                    Enter your Gemini API key to enable AI features (problem variations, explanations, hints).
+                    Get your key at <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a>.
+                </p>
+                <div class="input-group">
+                    <input type="password" id="gemini-api-key-input" placeholder="AIzaSy...">
+                    <button class="btn-toggle-visibility" onclick="toggleApiKeyVisibility()">👁️</button>
+                </div>
+                <button class="btn btn-primary" style="margin-top: 1rem;" onclick="saveApiKey()">Save API Key</button>
+                <button class="btn btn-secondary" style="margin-top: 1rem;" onclick="clearApiKey()">Clear API
+                    Key</button>
+                <div class="api-key-status" id="api-key-status"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop" onclick="closeSettings()"></div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal hidden" id="confirmation-modal">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <div class="modal-body">
+            <h3 id="confirm-message" style="margin-bottom: 1.5rem;"></h3>
+            <div class="action-buttons" style="justify-content: center; margin-top: 2rem;">
+                <button class="btn btn-secondary" onclick="closeConfirm()" id="cancel-confirm-btn">Cancel</button>
+                <button class="btn btn-primary" id="confirm-action-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop" onclick="closeConfirm()"></div>
+</div>
+
+<!-- Settings Button in Header (add this before the body closing tag) -->
+<script>
+    // Add settings button to header
+    document.addEventListener('DOMContentLoaded', () => {
+        const headerControls = document.querySelector('.header-controls');
+        const settingsBtn = document.createElement('button');
+        settingsBtn.className = 'settings-btn';
+        settingsBtn.innerHTML = '⚙️';
+        settingsBtn.title = 'Settings';
+        settingsBtn.onclick = openSettings;
+        headerControls.insertBefore(settingsBtn, document.getElementById('lang-selector'));
+    });
+
+    function openSettings() {
+        document.getElementById('settings-modal').classList.remove('hidden');
+        // Load current API key from localStorage
+        const apiKey = localStorage.getItem('gemini_api_key');
+        if (apiKey) {
+            document.getElementById('gemini-api-key-input').value = apiKey;
+        }
+    }
+
+    function closeSettings() {
+        document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function toggleApiKeyVisibility() {
+        const input = document.getElementById('gemini-api-key-input');
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    async function saveApiKey() {
+        const apiKey = document.getElementById('gemini-api-key-input').value.trim();
+        if (!apiKey) {
+            showApiKeyStatus('Please enter an API key', 'error');
+            return;
+        }
+
+        // Save to localStorage
+        localStorage.setItem('gemini_api_key', apiKey);
+
+        // Update backend by sending API key
+        try {
+            const response = await fetch('/api/gemini/set-key', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ api_key: apiKey })
+            });
+
+            if (response.ok) {
+                showApiKeyStatus('✅ API key saved successfully!', 'success');
+                // Refresh Gemini availability
+                await checkGeminiAvailability();
+            } else {
+                showApiKeyStatus('⚠️ API key saved locally (server restart needed)', 'warning');
+            }
+        } catch (error) {
+            console.error('Error saving API key:', error);
+            showApiKeyStatus('⚠️ API key saved locally only', 'warning');
+        }
+    }
+
+    function clearApiKey() {
+        localStorage.removeItem('gemini_api_key');
+        document.getElementById('gemini-api-key-input').value = '';
+        showApiKeyStatus('API key cleared', 'success');
+        checkGeminiAvailability();
+    }
+
+    function showApiKeyStatus(message, type) {
+        const statusEl = document.getElementById('api-key-status');
+        statusEl.textContent = message;
+        statusEl.className = `api-key-status ${type}`;
+        setTimeout(() => {
+            statusEl.textContent = '';
+            statusEl.className = 'api-key-status';
+        }, 3000);
+    }
+
+    // On load, check if API key exists in localStorage and set it
+    document.addEventListener('DOMContentLoaded', async () => {
+        const apiKey = localStorage.getItem('gemini_api_key');
+        if (apiKey) {
+            try {
+                const response = await fetch('/api/gemini/set-key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_key: apiKey })
+                });
+            } catch (error) {
+                console.log('API key in localStorage, but server could not be updated');
+            }
+        }
+    });
+</script>
