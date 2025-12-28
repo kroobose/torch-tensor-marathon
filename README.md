@@ -12,10 +12,6 @@ Whether you are a beginner looking to understand `reshape` and `view`, or an exp
 
 - **100 Curated Problems**: Carefully designed progression from basic shape changes to complex Deep Learning patterns.
 - **8 Categories**: Covers everything from basic indexing to advanced Einstein summation and DL applications (ViT patches, Attention masks, RoPE, etc.).
-- **Dual Interface**:
-  - **Interactive CLI**: A beautiful, terminal-based interface with syntax highlighting.
-  - **Modern Web App**: A responsive, glassmorphism-styled web interface with **Light/Dark themes** and progress tracking.
-- **Auto-Correction**: Validates your solution by checking both **tensor shapes** and **values** using `torch.allclose`.
 - **AI-Powered Assistance**: Integrated with **Google Gemini** to provide:
   - **AI Explanations**: Understand *why* a solution works.
   - **AI Hints**: Get nudges in the right direction without revealing the full answer.
@@ -108,16 +104,6 @@ To enable AI explanations and hints, you need a Google Gemini API key.
 | **DL Applications** | 14 | Real-world patterns: ViT patches, Multi-head Attention, Mixup, Focal Loss, RoPE |
 
 **Total:** 100 Problems
-
-## 🤝 Contributing
-
-Contributions are welcome! If you have a new problem idea or want to improve an existing one, please feel free to open a Pull Request.
-
-1.  Fork the repository
-2.  Create your feature branch (`git checkout -b feature/amazing-problem`)
-3.  Commit your changes (`git commit -m 'Add new problem about LoRA'`)
-4.  Push to the branch (`git push origin feature/amazing-problem`)
-5.  Open a Pull Request
 
 ## 📄 License
 
