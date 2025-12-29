@@ -12,9 +12,8 @@ Whether you are a beginner looking to understand `reshape` and `view`, or an exp
 
 - **100 Curated Problems**: Carefully designed progression from basic shape changes to complex Deep Learning patterns.
 - **8 Categories**: Covers everything from basic indexing to advanced Einstein summation and DL applications (ViT patches, Attention masks, RoPE, etc.).
-- **AI-Powered Assistance**: Integrated with **Google Gemini** to provide:
-  - **AI Explanations**: Understand *why* a solution works.
-  - **AI Hints**: Get nudges in the right direction without revealing the full answer.
+- **Bilingual Support**: Full Japanese and English support for problem descriptions, hints, and UI.
+- **AI Hints**: Integrated with **Google Gemini** to provide nudges in the right direction without revealing the full answer.
 
 ## 📦 Installation
 
@@ -76,9 +75,9 @@ uv run tensor-marathon --category einsum
 uv run tensor-marathon --lang ja
 ```
 
-## 🧠 AI Features (Gemini)
+## 🧠 AI Hints (Gemini)
 
-To enable AI explanations and hints, you need a Google Gemini API key.
+To enable AI hints, you need a Google Gemini API key.
 
 1.  **Get an API Key**: Visit [Google AI Studio](https://aistudio.google.com/).
 2.  **Set the Environment Variable**:
@@ -86,7 +85,7 @@ To enable AI explanations and hints, you need a Google Gemini API key.
     ```bash
     export GEMINI_API_KEY="your_api_key_here"
     ```
-3.  **Run the App**: The AI buttons (🤖 Explanation, 💡 Hint) will automatically appear in the web interface.
+3.  **Run the App**: The AI Hint button (💡) will automatically appear in the web interface.
 
 *Note: You can also set the API key directly within the Web UI settings.*
 
@@ -94,13 +93,13 @@ To enable AI explanations and hints, you need a Google Gemini API key.
 
 | Category | Count | Description |
 |----------|-------|-------------|
-| **Reshape & Permute** | 15 | `view`, `reshape`, `permute`, `transpose`, contiguous memory |
-| **Indexing & Slicing** | 15 | Fancy indexing, boolean masking, `torch.where`, ellipsis |
+| **Reshape & Permute** | 14 | `view`, `reshape`, `permute`, `transpose`, contiguous memory |
+| **Indexing & Slicing** | 14 | Fancy indexing, boolean masking, `torch.where`, ellipsis |
 | **Broadcasting** | 12 | `unsqueeze`, `expand`, broadcasting rules, normalization |
 | **Gather & Scatter** | 10 | `torch.gather`, `torch.scatter_add_`, one-hot encoding |
 | **Einstein Summation** | 12 | `torch.einsum` for matrix multiplication, attention, contractions |
-| **Stacking & Splitting** | 10 | `torch.cat`, `torch.stack`, `torch.chunk`, `torch.split` |
-| **Advanced Operations** | 12 | Masking, sorting, `topk`, padding, triangular matrices |
+| **Stacking & Splitting** | 11 | `torch.cat`, `torch.stack`, `torch.chunk`, `torch.split` |
+| **Advanced Operations** | 13 | Masking, sorting, `topk`, padding, triangular matrices |
 | **DL Applications** | 14 | Real-world patterns: ViT patches, Multi-head Attention, Mixup, Focal Loss, RoPE |
 
 **Total:** 100 Problems
