@@ -1128,3 +1128,167 @@ pre {
     color: #ffb74d;
     border: 1px solid rgba(255, 152, 0, 0.3);
 }
+
+/* Multi-case results */
+.case-results {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.case-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 0.75rem;
+    border: 1px solid transparent;
+}
+
+.case-item.success {
+    border-color: rgba(76, 175, 80, 0.3);
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.case-item.error {
+    border-color: rgba(244, 67, 54, 0.3);
+    background: rgba(244, 67, 54, 0.1);
+}
+
+.case-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.case-error {
+    margin-top: 0.5rem;
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.5rem;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    font-family: monospace;
+}
+
+.overall-error {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.2);
+    border-radius: 6px;
+    color: var(--text-primary);
+}
+
+/* Case Tabs */
+.case-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.case-tab {
+    padding: 0.5rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.case-tab:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    border-color: var(--accent-cyan);
+}
+
+.case-tab.active {
+    background: var(--gradient-primary);
+    color: white;
+    border-color: transparent;
+}
+
+.case-tab.solved {
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.case-tab.active.solved {
+    color: white;
+    border-color: transparent;
+}
+
+.case-status-icon {
+    font-size: 0.8rem;
+}
+
+/* Case Results in Result Box */
+.case-results {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.case-item {
+    display: flex;
+    flex-direction: column;
+    padding: 0.75rem;
+    border-radius: var(--border-radius);
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid transparent;
+}
+
+.case-item.success {
+    border-color: rgba(16, 185, 129, 0.3);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.case-item.error {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.case-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.case-icon {
+    font-size: 1.2rem;
+}
+
+.case-name {
+    font-weight: 600;
+    flex-grow: 1;
+}
+
+.case-status {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.case-error {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    padding-left: 2rem;
+}
+
+.overall-error {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+}

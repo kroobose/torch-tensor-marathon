@@ -41,6 +41,7 @@ class CodeSubmission(BaseModel):
     """Model for code submission."""
     problem_id: str
     user_code: str
+    case_name: Optional[str] = None
 
 
 class CheckResponse(BaseModel):
@@ -51,6 +52,9 @@ class CheckResponse(BaseModel):
     expected_shape: Optional[tuple] = None
     actual_shape: Optional[tuple] = None
     execution_output: Optional[str] = None
+    case_results: Optional[list] = None
+    actual_values: Optional[str] = None
+    expected_values: Optional[str] = None
 
 
 @app.get("/")
@@ -120,8 +124,19 @@ async def get_problem(problem_id: str):
         "hint_ja": problem.hint_ja,
         "hint_en": problem.hint_en,
         "setup_code": problem.setup_code,
-        "template_code": problem.template_code,
-        "tags": problem.tags
+        "solution_code": problem.solution_code,
+        "tags": problem.tags,
+        "cases": [
+            {
+                "name": c.name,
+                "description_ja": c.description_ja,
+                "description_en": c.description_en,
+                "setup_code": c.setup_code,
+                "solution_code": c.solution_code,
+                "hint_ja": c.hint_ja,
+                "hint_en": c.hint_en,
+            } for c in problem.cases
+        ]
     }
 
 
@@ -133,11 +148,11 @@ async def check_solution(submission: CodeSubmission):
     if not problem:
         raise HTTPException(status_code=404, detail="Problem not found")
 
-    result = checker.check_solution(
-        setup_code=problem.setup_code,
-        user_code=submission.user_code,
-        solution_code=problem.solution_code,
-        expected_shape=problem.expected_shape
+    # Use check_problem to validate against all cases or a specific one
+    result = checker.check_problem(
+        problem,
+        submission.user_code,
+        case_name=submission.case_name
     )
 
     return CheckResponse(
@@ -146,7 +161,10 @@ async def check_solution(submission: CodeSubmission):
         error_type=result.error_type,
         expected_shape=result.expected_shape,
         actual_shape=result.actual_shape,
-        execution_output=result.execution_output
+        execution_output=result.execution_output,
+        case_results=result.case_results,
+        actual_values=result.actual_values,
+        expected_values=result.expected_values
     )
 
 
@@ -211,6 +229,7 @@ class HintRequest(BaseModel):
     problem_id: str
     language: str = "en"
     user_code: Optional[str] = None
+    case_name: Optional[str] = None
 
 
 # Gemini API Endpoints
@@ -241,14 +260,33 @@ async def generate_hint(request: HintRequest):
     if not problem:
         raise HTTPException(status_code=404, detail="Problem not found")
 
+    # Find the correct case
+    case = None
+    if request.case_name and problem.cases:
+        for c in problem.cases:
+            if c.name == request.case_name:
+                case = c
+                break
+
+    # Fallback to first case or problem default
+    if case is None and problem.cases:
+        case = problem.cases[0]
+
+    # Get title, description and setup from the appropriate source
     title = problem.title_ja if request.language == "ja" else problem.title_en
-    description = problem.description_ja if request.language == "ja" else problem.description_en
+
+    if case:
+        description = case.description_ja if request.language == "ja" else case.description_en
+        setup_code = case.setup_code
+    else:
+        description = problem.description_ja if request.language == "ja" else problem.description_en
+        setup_code = problem.setup_code
 
     try:
         hint = gemini_client.generate_hint(
             problem_title=title,
             problem_description=description,
-            setup_code=problem.setup_code,
+            setup_code=setup_code,
             user_code=request.user_code,
             language=request.language
         )

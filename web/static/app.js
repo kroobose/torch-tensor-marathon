@@ -2,13 +2,17 @@
 
 // State
 const state = {
-    currentLang: 'en',
+    currentLang: 'ja',
     currentCategory: null,
     currentProblems: [],
     currentProblem: null,
     currentProblemIndex: 0,
     solvedProblems: new Set(),
     filteredDifficulty: 'all',
+    // New Multi-case state
+    currentCaseIndex: 0,
+    caseCodeMap: {}, // Stores user code for each case: { caseName: code }
+    caseStatusMap: {}, // Stores status for each case: { problemId: { caseName: bool } }
 };
 
 // API Base URL
@@ -34,13 +38,13 @@ function setupEventListeners() {
     });
 
     // Reset progress button
-    // Reset progress button
     document.getElementById('reset-progress').addEventListener('click', (e) => {
         e.preventDefault();
         showConfirm(
             state.currentLang === 'ja' ? '進捗をリセットしますか？' : 'Reset all progress?',
             () => {
                 state.solvedProblems.clear();
+                state.caseStatusMap = {};
                 saveProgress();
                 location.reload();
             }
@@ -76,10 +80,11 @@ function setupEventListeners() {
         const hintBox = document.getElementById('hint-box');
         // Always reset to original hint text when toggling manually
         if (state.currentProblem) {
-            const hintText = state.currentProblem['hint_' + state.currentLang];
-            // Parse markdown if marked is available
+            const currentCase = getCurrentCase();
+            const hintText = currentCase['hint_' + state.currentLang];
             const hintContent = typeof marked !== 'undefined' ? marked.parse(hintText) : hintText;
             hintBox.innerHTML = `<strong>${state.currentLang === 'ja' ? 'ヒント' : 'Hint'}:</strong><br><div class="markdown-content">${hintContent}</div>`;
+            renderLaTeX(hintBox);
         }
         hintBox.classList.toggle('hidden');
     });
@@ -110,6 +115,14 @@ function setupEventListeners() {
             runCode();
         }
     });
+
+    // Save code on input
+    document.getElementById('user-code').addEventListener('input', (e) => {
+        if (state.currentProblem) {
+            const currentCase = getCurrentCase();
+            state.caseCodeMap[currentCase.name] = e.target.value;
+        }
+    });
 }
 
 // API Calls
@@ -130,9 +143,18 @@ async function loadCategories() {
 
 async function loadProblems(category) {
     try {
+        if (!category) return;
         showLoading(true);
-        const response = await fetch(`${API_BASE}/api/problems/${category}`);
+        // Add timestamp to prevent caching
+        const response = await fetch(`${API_BASE}/api/problems/${category}?t=${Date.now()}`);
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
         const data = await response.json();
+
+        if (!data || !data.problems) {
+            throw new Error('Invalid data received');
+        }
 
         state.currentCategory = category;
         state.currentProblems = data.problems;
@@ -153,6 +175,11 @@ async function loadProblemDetail(problemId) {
 
         state.currentProblem = problem;
         state.currentProblemIndex = state.currentProblems.findIndex(p => p.id === problemId);
+
+        // Reset case state
+        state.currentCaseIndex = 0;
+        state.caseCodeMap = {};
+
         displayProblemDetail(problem);
         showProblemDetail();
     } catch (error) {
@@ -162,13 +189,26 @@ async function loadProblemDetail(problemId) {
     }
 }
 
+// Helper to get current active case object
+function getCurrentCase() {
+    if (!state.currentProblem) return null;
+    if (state.currentProblem.cases && state.currentProblem.cases.length > 0) {
+        return state.currentProblem.cases[state.currentCaseIndex];
+    }
+    // Fallback for flat structure if needed, though we are moving to cases
+    return state.currentProblem;
+}
+
 async function runCode() {
     const userCode = document.getElementById('user-code').value.trim();
-
     if (!userCode) {
         showResult(false, state.currentLang === 'ja' ? 'コードを入力してください' : 'Please enter your code');
         return;
     }
+
+    const currentCase = getCurrentCase();
+    // Save code
+    state.caseCodeMap[currentCase.name] = userCode;
 
     try {
         showLoading(true);
@@ -180,6 +220,7 @@ async function runCode() {
             body: JSON.stringify({
                 problem_id: state.currentProblem.id,
                 user_code: userCode,
+                case_name: currentCase.name // Send specific case name
             }),
         });
 
@@ -187,7 +228,7 @@ async function runCode() {
         showResult(result.is_correct, result.message, result);
 
         if (result.is_correct) {
-            markAsSolved(state.currentProblem.id);
+            markCaseAsSolved(state.currentProblem.id, currentCase.name);
         }
     } catch (error) {
         console.error('Error checking solution:', error);
@@ -199,20 +240,27 @@ async function runCode() {
 
 async function showSolution() {
     try {
-        showLoading(true);
-        const response = await fetch(`${API_BASE}/api/solution/${state.currentProblem.id}`);
-        const data = await response.json();
-
-        const solutionBox = document.getElementById('solution-box');
+        const currentCase = getCurrentCase();
         const solutionCode = document.getElementById('solution-code');
 
-        solutionCode.textContent = data.solution_code;
-        Prism.highlightElement(solutionCode);
-        solutionBox.classList.remove('hidden');
+        // We might want to fetch solution from backend if not present, but for now assuming it's in the case object
+        // Or if backend API `api/solution` returns just code.
+        // Let's rely on what we have locally if possible, or fetch specific to case.
+        // Actually the backend `api/solution` might just return the `solution_code` field.
+        // Let's just use the local data since we loaded full problem detail.
+
+        if (solutionCode && currentCase && currentCase.solution_code) {
+            solutionCode.textContent = currentCase.solution_code;
+            if (typeof Prism !== 'undefined') {
+                Prism.highlightElement(solutionCode);
+            }
+            document.getElementById('solution-box').classList.remove('hidden');
+        } else {
+            console.warn('Solution code not found for case:', currentCase ? currentCase.name : 'unknown');
+        }
+
     } catch (error) {
-        console.error('Error loading solution:', error);
-    } finally {
-        showLoading(false);
+        console.error('Error showing solution:', error);
     }
 }
 
@@ -270,32 +318,90 @@ function displayProblemDetail(problem) {
     document.getElementById('problem-difficulty').textContent = t(problem.difficulty, state.currentLang);
     document.getElementById('problem-difficulty').className = `difficulty-badge ${problem.difficulty}`;
     document.getElementById('problem-title').textContent = problem['title_' + state.currentLang];
-    document.getElementById('problem-description').textContent = problem['description_' + state.currentLang];
 
-    // Setup code
-    const setupCode = document.getElementById('setup-code');
-    setupCode.textContent = problem.setup_code || '# No setup required';
-    Prism.highlightElement(setupCode);
+    // Render Case Tabs if cases exist
+    renderCaseTabs(problem);
 
-    // Hint
-    const hintBox = document.getElementById('hint-box');
-    const hintText = problem['hint_' + state.currentLang];
-    if (hintText) {
-        hintBox.textContent = hintText;
-        document.getElementById('hint-btn').style.display = 'inline-flex';
-    } else {
-        document.getElementById('hint-btn').style.display = 'none';
-    }
-    hintBox.classList.add('hidden');
-
-    // Clear previous state
-    document.getElementById('user-code').value = '';
-    document.getElementById('result-box').classList.add('hidden');
-    document.getElementById('solution-box').classList.add('hidden');
+    // Switch to first case (or current index if preserving)
+    switchCase(0);
 
     // Update navigation buttons
     updateNavigationButtons();
 }
+
+function renderCaseTabs(problem) {
+    const tabsContainer = document.getElementById('case-tabs');
+    tabsContainer.innerHTML = ''; // Clear existing
+
+    if (!problem.cases || problem.cases.length <= 1) {
+        // Hide tabs if only one case (legacy or single)
+        tabsContainer.classList.add('hidden');
+        return;
+    }
+
+    tabsContainer.classList.remove('hidden');
+
+    problem.cases.forEach((c, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'case-tab';
+
+        // Check if solved
+        const isSolved = state.caseStatusMap[problem.id] && state.caseStatusMap[problem.id][c.name];
+        if (isSolved) btn.classList.add('solved');
+
+        btn.innerHTML = `
+            <span>${t('Case', state.currentLang)} ${index + 1}</span>
+            ${isSolved ? '<span class="case-status-icon">✓</span>' : ''}
+        `;
+
+        btn.onclick = () => switchCase(index);
+        tabsContainer.appendChild(btn);
+    });
+}
+
+function switchCase(index) {
+    state.currentCaseIndex = index;
+    const problem = state.currentProblem;
+    const currentCase = problem.cases[index];
+
+    // Update active tab
+    const tabs = document.querySelectorAll('.case-tab');
+    tabs.forEach((tab, i) => {
+        if (i === index) tab.classList.add('active');
+        else tab.classList.remove('active');
+    });
+
+    // Update Content
+    const descEl = document.getElementById('problem-description');
+    const descriptionText = currentCase['description_' + state.currentLang];
+    descEl.innerHTML = typeof marked !== 'undefined' ? marked.parse(descriptionText) : descriptionText;
+    renderLaTeX(descEl);
+
+    // Setup code
+    const setupCode = document.getElementById('setup-code');
+    setupCode.textContent = currentCase.setup_code || '# No setup required';
+    Prism.highlightElement(setupCode);
+
+    // Hint
+    const hintBox = document.getElementById('hint-box');
+    const hintText = currentCase['hint_' + state.currentLang];
+    if (hintText) {
+        hintBox.textContent = hintText; // Not visible yet
+        document.getElementById('hint-btn').style.display = 'inline-flex';
+    } else {
+        document.getElementById('hint-btn').style.display = 'none';
+    }
+    hintBox.classList.add('hidden'); // Hide hint by default on switch
+
+    // Restore User Code
+    const userCode = document.getElementById('user-code');
+    userCode.value = state.caseCodeMap[currentCase.name] || '';
+
+    // Clear Result & Solution output
+    document.getElementById('result-box').classList.add('hidden');
+    document.getElementById('solution-box').classList.add('hidden');
+}
+
 
 function showResult(isCorrect, message, details = {}) {
     const resultBox = document.getElementById('result-box');
@@ -309,33 +415,54 @@ function showResult(isCorrect, message, details = {}) {
     resultIcon.textContent = isCorrect ? '✅' : '❌';
     resultTitle.textContent = isCorrect ? (state.currentLang === 'ja' ? '正解！' : 'Correct!') : (state.currentLang === 'ja' ? '不正解' : 'Incorrect');
 
-    let messageHtml = '';
+    let messageHtml = `<div style="white-space: pre-wrap;">${message}</div>`;
 
-    // Format error messages in a more user-friendly way
-    if (!isCorrect && details.error_type) {
-        if (details.error_type === 'shape') {
-            messageHtml = `<div class="error-section">
-                <div class="error-type">${state.currentLang === 'ja' ? '形状エラー' : 'Shape Error'}</div>
-                <div class="error-detail">
-                    <strong>${state.currentLang === 'ja' ? '期待される形状' : 'Expected Shape'}:</strong>
-                    <code>${JSON.stringify(details.expected_shape)}</code>
+    // Show tensor values for correct answers
+    if (isCorrect && details.actual_values) {
+        messageHtml += `<div class="tensor-display" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.2);">
+            <strong>${state.currentLang === 'ja' ? '📊 結果テンソル' : '📊 Result Tensor'}:</strong>
+            <pre style="background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 4px; overflow-x: auto; margin-top: 0.5rem; font-size: 0.85rem;">${details.actual_values}</pre>
+        </div>`;
+    }
+
+    // Error details - Shape mismatch
+    if (!isCorrect && details.error_type === 'shape') {
+        messageHtml = `<div class="error-section">
+            <div class="error-type" style="font-weight: bold; margin-bottom: 0.5rem;">📐 ${state.currentLang === 'ja' ? '形状エラー' : 'Shape Error'}</div>
+            <div style="white-space: pre-wrap; margin-bottom: 1rem;">${message}</div>
+        </div>`;
+
+        if (details.actual_values) {
+            messageHtml += `<div class="tensor-compare" style="display: grid; gap: 1rem; margin-top: 1rem;">
+                <div>
+                    <strong>${state.currentLang === 'ja' ? '🎯 期待される出力' : '🎯 Expected Output'}:</strong>
+                    <pre style="background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 4px; overflow-x: auto; margin-top: 0.5rem; font-size: 0.85rem;">${details.expected_values || 'N/A'}</pre>
                 </div>
-                <div class="error-detail">
-                    <strong>${state.currentLang === 'ja' ? '実際の形状' : 'Actual Shape'}:</strong>
-                    <code>${JSON.stringify(details.actual_shape)}</code>
+                <div>
+                    <strong>${state.currentLang === 'ja' ? '📝 あなたの出力' : '📝 Your Output'}:</strong>
+                    <pre style="background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 4px; overflow-x: auto; margin-top: 0.5rem; font-size: 0.85rem;">${details.actual_values || 'N/A'}</pre>
                 </div>
             </div>`;
-        } else {
-            messageHtml = message;
         }
-    } else {
-        // Success case - add shape info
-        messageHtml = `<div>${message}</div>`;
+    }
 
-        if (details.actual_shape) {
-            messageHtml += `<div class="success-detail" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.2);">
-                <strong>${state.currentLang === 'ja' ? '結果の形状' : 'Result Shape'}:</strong>
-                <code>${JSON.stringify(details.actual_shape)}</code>
+    // Error details - Value mismatch
+    if (!isCorrect && details.error_type === 'value') {
+        messageHtml = `<div class="error-section">
+            <div class="error-type" style="font-weight: bold; margin-bottom: 0.5rem;">📊 ${state.currentLang === 'ja' ? '値エラー' : 'Value Error'}</div>
+            <div style="white-space: pre-wrap; margin-bottom: 1rem;">${message}</div>
+        </div>`;
+
+        if (details.actual_values) {
+            messageHtml += `<div class="tensor-compare" style="display: grid; gap: 1rem; margin-top: 1rem;">
+                <div>
+                    <strong>${state.currentLang === 'ja' ? '🎯 期待される出力' : '🎯 Expected Output'}:</strong>
+                    <pre style="background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 4px; overflow-x: auto; margin-top: 0.5rem; font-size: 0.85rem;">${details.expected_values || 'N/A'}</pre>
+                </div>
+                <div>
+                    <strong>${state.currentLang === 'ja' ? '📝 あなたの出力' : '📝 Your Output'}:</strong>
+                    <pre style="background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 4px; overflow-x: auto; margin-top: 0.5rem; font-size: 0.85rem;">${details.actual_values || 'N/A'}</pre>
+                </div>
             </div>`;
         }
     }
@@ -357,6 +484,21 @@ function showResult(isCorrect, message, details = {}) {
 
     // Scroll to result
     resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    renderLaTeX(resultBox);
+}
+
+function renderLaTeX(element) {
+    if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(element, {
+            delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '$', right: '$', display: false },
+                { left: '\\(', right: '\\)', display: false },
+                { left: '\\[', right: '\\]', display: true }
+            ],
+            throwOnError: false
+        });
+    }
 }
 
 
@@ -404,13 +546,40 @@ function loadProgress() {
     const saved = localStorage.getItem('tensorMarathonProgress');
     if (saved) {
         state.solvedProblems = new Set(JSON.parse(saved));
-        updateProgressDisplay();
     }
+    // Load Case Status
+    const savedCaseStatus = localStorage.getItem('tensorMarathonCaseStatus');
+    if (savedCaseStatus) {
+        state.caseStatusMap = JSON.parse(savedCaseStatus);
+    }
+    updateProgressDisplay();
 }
 
 function saveProgress() {
     localStorage.setItem('tensorMarathonProgress', JSON.stringify([...state.solvedProblems]));
+    localStorage.setItem('tensorMarathonCaseStatus', JSON.stringify(state.caseStatusMap));
     updateProgressDisplay();
+}
+
+function markCaseAsSolved(problemId, caseName) {
+    if (!state.caseStatusMap[problemId]) {
+        state.caseStatusMap[problemId] = {};
+    }
+    state.caseStatusMap[problemId][caseName] = true;
+
+    // Update tab style
+    renderCaseTabs(state.currentProblem);
+
+    // Check if ALL cases are solved
+    const allCases = state.currentProblem.cases || [];
+    const allSolved = allCases.every(c => state.caseStatusMap[problemId][c.name]);
+
+    if (allSolved) {
+        markAsSolved(problemId);
+    } else {
+        // Just save partial progress
+        saveProgress();
+    }
 }
 
 function markAsSolved(problemId) {
@@ -472,22 +641,21 @@ function updateGeminiUI() {
 }
 
 
-
-
-
 async function getAIHint() {
     if (!state.currentProblem || !geminiEnabled) return;
 
     showLoading(true);
     try {
         const userCode = document.getElementById('user-code').value.trim();
+        const currentCase = getCurrentCase();
         const response = await fetch(`${API_BASE}/api/gemini/hint`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 problem_id: state.currentProblem.id,
                 language: state.currentLang,
-                user_code: userCode || null
+                user_code: userCode || null,
+                case_name: currentCase ? currentCase.name : null
             })
         });
 
@@ -498,6 +666,7 @@ async function getAIHint() {
         // Parse markdown if marked is available
         const hintContent = typeof marked !== 'undefined' ? marked.parse(data.hint) : data.hint;
         hintBox.innerHTML = `<strong>🤖 AI Hint:</strong><br><div class="markdown-content">${hintContent}</div>`;
+        renderLaTeX(hintBox);
         hintBox.classList.remove('hidden');
     } catch (error) {
         console.error('Error generating hint:', error);

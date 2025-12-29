@@ -1,252 +1,521 @@
 """Reshape & Permute problems - tensor shape transformations."""
 
 from typing import List
-from torch_tensor_marathon.problem import Problem
+from torch_tensor_marathon.problem import Problem, ProblemCase
 
 
 def get_reshape_permute_problems() -> List[Problem]:
     """Get all Reshape & Permute category problems."""
 
     problems = [
-        # Beginner level - Basic reshape operations
         Problem(
-            id="reshape_001",
+            id="reshape_basics",
             category="reshape_permute",
             difficulty="beginner",
-            title_ja="1D から 2D への変換",
-            title_en="1D to 2D Conversion",
-            description_ja="形状 [12] のテンソルを [3, 4] に変換してください。",
-            description_en="Convert a tensor of shape [12] to [3, 4].",
-            hint_ja="view() または reshape() を使用します。",
-            hint_en="Use view() or reshape().",
-            setup_code="x = torch.arange(12)",
-            solution_code="""result = x.view(3, 4)
-# Alternative: result = x.reshape(3, 4)""",
-            tags=["reshape", "view", "2d"],
+            title_ja="View vs Reshape Differences",
+            title_en="View vs Reshape Differences",
+            cases=[
+                ProblemCase(
+                    name="View (Contiguous)",
+                    description_ja="連続メモリのテンソル x [12] を view で (3, 4) に変換してください。",
+                    description_en="Convert contiguous tensor x [12] to (3, 4) using view.",
+                    hint_ja="x.view(3, 4) を使用。view は連続メモリのテンソルにのみ使用可能です。",
+                    hint_en="Use x.view(3, 4). view only works on contiguous tensors.",
+                    setup_code="x = torch.arange(12)",
+                    solution_code="result = x.view(3, 4)"
+                ),
+                ProblemCase(
+                    name="Reshape (Non-contiguous)",
+                    description_ja="転置で非連続になったテンソル x を (6, 2) に変形してください。※view は失敗します。",
+                    description_en="Reshape non-contiguous (transposed) tensor x to (6, 2). Note: view would fail here.",
+                    hint_ja="x.reshape(6, 2) を使用。reshape は非連続でも動作します（必要ならコピー）。",
+                    hint_en="Use x.reshape(6, 2). reshape works on non-contiguous tensors (copies if needed).",
+                    setup_code="x = torch.arange(12).view(3, 4).transpose(0, 1)",
+                    solution_code="result = x.reshape(6, 2)"
+                ),
+                ProblemCase(
+                    name="Infer Dim (-1)",
+                    description_ja="テンソル x [24] を、行数 6、列数自動推論 (-1) で (6, 4) に変換してください。",
+                    description_en="Convert x [24] to (6, -1) using -1 for automatic inference.",
+                    hint_ja="x.view(6, -1) または x.reshape(6, -1) を使用。-1 は自動的にサイズを推論します。",
+                    hint_en="Use x.view(6, -1) or x.reshape(6, -1). -1 infers the size automatically.",
+                    setup_code="x = torch.arange(24)",
+                    solution_code="result = x.view(6, -1)"
+                ),
+            ],
+            tags=["reshape", "view", "contiguous"],
         ),
 
+
         Problem(
-            id="reshape_002",
+            id="flattening",
             category="reshape_permute",
             difficulty="beginner",
-            title_ja="2D から 1D への平坦化",
-            title_en="2D to 1D Flattening",
-            description_ja="形状 [4, 5] のテンソルを 1次元に平坦化してください。",
-            description_en="Flatten a tensor of shape [4, 5] to 1D.",
-            hint_ja="view(-1) または flatten() を使用します。",
-            hint_en="Use view(-1) or flatten().",
-            setup_code="x = torch.randn(4, 5)",
-            solution_code="""result = x.view(-1)
-# Alternative: result = x.flatten()""",
-            tags=["flatten", "view", "1d"],
+            title_ja="Flattening Operations",
+            title_en="Flattening Operations",
+            cases=[
+                ProblemCase(
+                    name="Complete Flatten",
+                    description_ja="形状 [4, 5] のテンソル x を完全に1次元に平坦化してください。",
+                    description_en="Flatten tensor x to 1D.",
+                    hint_ja="x.flatten() または x.view(-1) を使用します。",
+                    hint_en="Use x.flatten() or x.view(-1).",
+                    setup_code="x = torch.randn(4, 5)",
+                    solution_code="result = x.flatten()"
+                ),
+                ProblemCase(
+                    name="Batch Flatten",
+                    description_ja="形状 [8, 3, 4] のテンソル x のバッチ次元(dim=0)を保持したまま平坦化し、(8, 12)にしてください。",
+                    description_en="Flatten x keeping batch dimension (0), resulting in (8, 12).",
+                    hint_ja="x.flatten(start_dim=1) を使用します。",
+                    hint_en="Use x.flatten(start_dim=1).",
+                    setup_code="x = torch.randn(8, 3, 4)",
+                    solution_code="result = x.flatten(start_dim=1)"
+                ),
+                 ProblemCase(
+                    name="Range Flatten",
+                    description_ja="形状 [2, 3, 4, 5] のテンソル x の dim=1 と dim=2 のみを平坦化し、(2, 12, 5)にしてください。",
+                    description_en="Flatten dim 1 and 2 of x, resulting in (2, 12, 5).",
+                    hint_ja="x.flatten(start_dim=1, end_dim=2) を使用します。",
+                    hint_en="Use x.flatten(start_dim=1, end_dim=2).",
+                    setup_code="x = torch.randn(2, 3, 4, 5)",
+                    solution_code="result = x.flatten(start_dim=1, end_dim=2)"
+                ),
+            ],
+            tags=["flatten", "reshape"],
         ),
 
         Problem(
-            id="reshape_003",
+            id="squeeze_unsqueeze",
             category="reshape_permute",
             difficulty="beginner",
-            title_ja="バッチ次元の追加",
-            title_en="Add Batch Dimension",
-            description_ja="形状 [3, 224, 224] の画像テンソルにバッチ次元を追加して [1, 3, 224, 224] にしてください。",
-            description_en="Add a batch dimension to an image tensor of shape [3, 224, 224] to make it [1, 3, 224, 224].",
-            hint_ja="unsqueeze(0) を使用します。",
-            hint_en="Use unsqueeze(0).",
-            setup_code="x = torch.randn(3, 224, 224)",
-            solution_code="""result = x.unsqueeze(0)
-# Alternative: result = x[None, ...]""",
-            tags=["unsqueeze", "batch", "cv"],
+            title_ja="Squeeze & Unsqueeze",
+            title_en="Squeeze & Unsqueeze",
+            cases=[
+                 ProblemCase(
+                    name="Unsqueeze Front",
+                    description_ja="ベクトル x [5] の先頭に次元を追加して [1, 5] にしてください。",
+                    description_en="Add dimension at front of x [5] to get [1, 5].",
+                    hint_ja="x.unsqueeze(0) を使用します。",
+                    hint_en="Use x.unsqueeze(0).",
+                    setup_code="x = torch.randn(5)",
+                    solution_code="result = x.unsqueeze(0)"
+                ),
+                ProblemCase(
+                    name="Unsqueeze Back",
+                    description_ja="ベクトル x [5] の末尾に次元を追加して [5, 1] にしてください。",
+                    description_en="Add dimension at back of x [5] to get [5, 1].",
+                    hint_ja="x.unsqueeze(-1) を使用します。",
+                    hint_en="Use x.unsqueeze(-1).",
+                    setup_code="x = torch.randn(5)",
+                    solution_code="result = x.unsqueeze(-1)"
+                ),
+                ProblemCase(
+                    name="Squeeze Front",
+                    description_ja="テンソル x [1, 5] の先頭のサイズ1の次元を削除してください。",
+                    description_en="Remove first size-1 dimension of x [1, 5].",
+                    hint_ja="x.squeeze(0) を使用します。",
+                    hint_en="Use x.squeeze(0).",
+                    setup_code="x = torch.randn(1, 5)",
+                    solution_code="result = x.squeeze(0)"
+                ),
+                 ProblemCase(
+                    name="Squeeze Specific",
+                    description_ja="テンソル x [5, 1, 4] の dim=1 を削除してください。",
+                    description_en="Remove dim=1 from x [5, 1, 4].",
+                    hint_ja="x.squeeze(1) を使用します。",
+                    hint_en="Use x.squeeze(1).",
+                    setup_code="x = torch.randn(5, 1, 4)",
+                    solution_code="result = x.squeeze(1)"
+                ),
+            ],
+            tags=["squeeze", "unsqueeze"],
         ),
 
         Problem(
-            id="reshape_004",
+            id="permute_transpose",
+            category="reshape_permute",
+            difficulty="intermediate",
+            title_ja="Permute & Transpose",
+            title_en="Permute & Transpose",
+            cases=[
+                ProblemCase(
+                    name="Permute 2D",
+                    description_ja="テンソル x [3, 4] の次元を入れ替えて [4, 3] にしてください。",
+                    description_en="Permute dimensions of x [3, 4] to [4, 3].",
+                    hint_ja="x.permute(1, 0) を使用。2Dでは x.T, x.transpose(0, 1) でも同じ結果になります。",
+                    hint_en="Use x.permute(1, 0). For 2D, x.T and x.transpose(0, 1) also work.",
+                    setup_code="x = torch.randn(3, 4)",
+                    solution_code="result = x.permute(1, 0)"
+                ),
+                ProblemCase(
+                    name="Permute 3D",
+                    description_ja="テンソル x [2, 3, 4] の次元を (2, 0, 1) の順序に入れ替え、[4, 2, 3] にしてください。",
+                    description_en="Permute dimensions of x [2, 3, 4] to order (2, 0, 1).",
+                    hint_ja="x.permute(2, 0, 1) を使用します。",
+                    hint_en="Use x.permute(2, 0, 1).",
+                    setup_code="x = torch.randn(2, 3, 4)",
+                    solution_code="result = x.permute(2, 0, 1)"
+                ),
+                 ProblemCase(
+                    name="CHW to HWC",
+                    description_ja="画像テンソル x [3, 224, 224] (CHW) を [224, 224, 3] (HWC) に変換してください。",
+                    description_en="Convert image x (CHW) to (HWC).",
+                    hint_ja="x.permute(1, 2, 0) を使用します。",
+                    hint_en="Use x.permute(1, 2, 0).",
+                    setup_code="x = torch.randn(3, 224, 224)",
+                    solution_code="result = x.permute(1, 2, 0)"
+                ),
+                ProblemCase(
+                    name="Transpose 2D",
+                    description_ja="テンソル x [3, 4] を転置してください。",
+                    description_en="Transpose tensor x [3, 4].",
+                    hint_ja="x.transpose(0, 1) または x.T を使用します。",
+                    hint_en="Use x.transpose(0, 1) or x.T.",
+                    setup_code="x = torch.randn(3, 4)",
+                    solution_code="result = x.transpose(0, 1)"
+                ),
+            ],
+            tags=["permute", "transpose"],
+        ),
+
+        Problem(
+            id="reshape_ops_intermediate",
+            category="reshape_permute",
+            difficulty="intermediate",
+            title_ja="Dimension Ops (Swap/Move)",
+            title_en="Dimension Ops (Swap/Move)",
+            cases=[
+                ProblemCase(
+                    name="Swapdims/Transpose",
+                    description_ja="テンソル x [3, 4, 5] の dim=0 と dim=2 を交換してください。",
+                    description_en="Swap dim 0 and 2 of x.",
+                    hint_ja="torch.swapdims(x, 0, 2) または x.transpose(0, 2) を使用。swapdims は transpose のエイリアスです。",
+                    hint_en="Use torch.swapdims(x, 0, 2) or x.transpose(0, 2). swapdims is an alias for transpose.",
+                    setup_code="x = torch.randn(3, 4, 5)",
+                    solution_code="result = x.transpose(0, 2)"
+                ),
+                ProblemCase(
+                    name="Movedim Single",
+                    description_ja="テンソル x [3, 4, 5] の dim=2 を dim=0 に移動してください。",
+                    description_en="Move dim 2 to dim 0.",
+                    hint_ja="torch.movedim(x, 2, 0) を使用します。",
+                    hint_en="Use torch.movedim(x, 2, 0).",
+                    setup_code="x = torch.randn(3, 4, 5)",
+                    solution_code="result = torch.movedim(x, 2, 0)"
+                ),
+                 ProblemCase(
+                    name="Contiguous",
+                    description_ja="転置して不連続になったテンソル x をメモリ上で連続化してください。",
+                    description_en="Make transposed tensor x contiguous.",
+                    hint_ja="x.contiguous() を使用します。",
+                    hint_en="Use x.contiguous().",
+                    setup_code="x = torch.randn(3, 4).transpose(0, 1)",
+                    solution_code="result = x.contiguous()"
+                ),
+            ],
+            tags=["swapdims", "movedim", "contiguous"],
+        ),
+
+        Problem(
+            id="reshape_ops_advanced",
+            category="reshape_permute",
+            difficulty="advanced",
+            title_ja="Advanced Reshape Ops",
+            title_en="Advanced Reshape Ops",
+            cases=[
+                ProblemCase(
+                    name="Einsum Transpose",
+                    description_ja="テンソル x [3, 4] を einsum を使って転置してください。",
+                    description_en="Transpose x using einsum.",
+                    hint_ja="torch.einsum('ij->ji', x) を使用します。",
+                    hint_en="Use torch.einsum('ij->ji', x).",
+                    setup_code="x = torch.randn(3, 4)",
+                    solution_code="result = torch.einsum('ij->ji', x)"
+                ),
+                ProblemCase(
+                    name="Repeat (Copy)",
+                    description_ja="テンソル x [3, 1] を dim=0で1回、dim=1で4回繰り返して [3, 4] にしてください。",
+                    description_en="Repeat x [3, 1] to get [3, 4].",
+                    hint_ja="x.repeat(1, 4) を使用。repeat は実際にメモリをコピーします。",
+                    hint_en="Use x.repeat(1, 4). repeat actually copies memory.",
+                    setup_code="x = torch.randn(3, 1)",
+                    solution_code="result = x.repeat(1, 4)"
+                ),
+                 ProblemCase(
+                    name="Expand (View)",
+                    description_ja="テンソル x [3, 1] をメモリコピーなしで [3, 4] に拡張してください。",
+                    description_en="Expand x [3, 1] to [3, 4] without copying memory.",
+                    hint_ja="x.expand(3, 4) を使用。expand はビューを作成（メモリコピーなし）。repeat はコピー。",
+                    hint_en="Use x.expand(3, 4). expand creates a view (no copy). repeat copies memory.",
+                    setup_code="x = torch.randn(3, 1)",
+                    solution_code="result = x.expand(3, 4)"
+                ),
+                 ProblemCase(
+                    name="Unfold",
+                    description_ja="テンソル x [10] に対して、dim=0, size=3, step=1 でスライディングウィンドウを適用してください。",
+                    description_en="Apply unfold to x [10] with size=3, step=1.",
+                    hint_ja="x.unfold(0, 3, 1) を使用します。",
+                    hint_en="Use x.unfold(0, 3, 1).",
+                    setup_code="x = torch.arange(10)",
+                    solution_code="result = x.unfold(0, 3, 1)"
+                ),
+                ProblemCase(
+                    name="Atleast 2D",
+                    description_ja="1Dテンソル x [5] を少なくとも2次元のテンソルにしてください。",
+                    description_en="Ensure x is at least 2D.",
+                    hint_ja="torch.atleast_2d(x) を使用します。",
+                    hint_en="Use torch.atleast_2d(x).",
+                    setup_code="x = torch.randn(5)",
+                    solution_code="result = torch.atleast_2d(x)"
+                ),
+            ],
+            tags=["advanced", "einsum", "repeat", "expand"],
+        ),
+
+        # === NEW PROBLEMS ===
+
+        Problem(
+            id="nchw_nhwc_conversion",
+            category="reshape_permute",
+            difficulty="intermediate",
+            title_ja="NCHW/NHWC Conversion",
+            title_en="NCHW/NHWC Conversion",
+            cases=[
+                ProblemCase(
+                    name="NCHW to NHWC",
+                    description_ja="バッチ画像テンソル x [2, 3, 224, 224] (NCHW) を [2, 224, 224, 3] (NHWC) に変換してください。",
+                    description_en="Convert batch image x from NCHW to NHWC.",
+                    hint_ja="x.permute(0, 2, 3, 1) を使用します。",
+                    hint_en="Use x.permute(0, 2, 3, 1).",
+                    setup_code="x = torch.randn(2, 3, 224, 224)",
+                    solution_code="result = x.permute(0, 2, 3, 1)"
+                ),
+                ProblemCase(
+                    name="NHWC to NCHW",
+                    description_ja="バッチ画像テンソル x [2, 224, 224, 3] (NHWC) を [2, 3, 224, 224] (NCHW) に変換してください。",
+                    description_en="Convert batch image x from NHWC to NCHW.",
+                    hint_ja="x.permute(0, 3, 1, 2) を使用します。",
+                    hint_en="Use x.permute(0, 3, 1, 2).",
+                    setup_code="x = torch.randn(2, 224, 224, 3)",
+                    solution_code="result = x.permute(0, 3, 1, 2)"
+                ),
+            ],
+            tags=["nchw", "nhwc", "image", "permute"],
+        ),
+
+        Problem(
+            id="view_complex_real",
+            category="reshape_permute",
+            difficulty="advanced",
+            title_ja="Complex Tensor Views",
+            title_en="Complex Tensor Views",
+            cases=[
+                ProblemCase(
+                    name="View as Complex",
+                    description_ja="形状 [4, 2] の実数テンソル x を複素数テンソル [4] として解釈してください。",
+                    description_en="View real tensor x [4, 2] as complex tensor [4].",
+                    hint_ja="torch.view_as_complex(x) を使用します。",
+                    hint_en="Use torch.view_as_complex(x).",
+                    setup_code="x = torch.randn(4, 2)",
+                    solution_code="result = torch.view_as_complex(x)"
+                ),
+                ProblemCase(
+                    name="View as Real",
+                    description_ja="形状 [4] の複素数テンソル x を実数テンソル [4, 2] として解釈してください。",
+                    description_en="View complex tensor x [4] as real tensor [4, 2].",
+                    hint_ja="torch.view_as_real(x) を使用します。",
+                    hint_en="Use torch.view_as_real(x).",
+                    setup_code="x = torch.randn(4, dtype=torch.complex64)",
+                    solution_code="result = torch.view_as_real(x)"
+                ),
+            ],
+            tags=["complex", "view", "advanced"],
+        ),
+
+        Problem(
+            id="unflatten_operations",
+            category="reshape_permute",
+            difficulty="intermediate",
+            title_ja="Unflatten Operations",
+            title_en="Unflatten Operations",
+            cases=[
+                ProblemCase(
+                    name="Unflatten to 2D",
+                    description_ja="形状 [12] のテンソル x を dim=0 で [3, 4] に展開してください。",
+                    description_en="Unflatten x [12] at dim 0 to [3, 4].",
+                    hint_ja="x.unflatten(0, (3, 4)) を使用します。",
+                    hint_en="Use x.unflatten(0, (3, 4)).",
+                    setup_code="x = torch.arange(12)",
+                    solution_code="result = x.unflatten(0, (3, 4))"
+                ),
+                ProblemCase(
+                    name="Unflatten Middle",
+                    description_ja="形状 [2, 12] のテンソル x の dim=1 を [3, 4] に展開して [2, 3, 4] にしてください。",
+                    description_en="Unflatten dim 1 of x [2, 12] to [2, 3, 4].",
+                    hint_ja="x.unflatten(1, (3, 4)) を使用します。",
+                    hint_en="Use x.unflatten(1, (3, 4)).",
+                    setup_code="x = torch.randn(2, 12)",
+                    solution_code="result = x.unflatten(1, (3, 4))"
+                ),
+                ProblemCase(
+                    name="Unflatten Batch",
+                    description_ja="形状 [24, 5] のテンソル x の dim=0 を [4, 6] に展開して [4, 6, 5] にしてください。",
+                    description_en="Unflatten dim 0 of x [24, 5] to [4, 6, 5].",
+                    hint_ja="x.unflatten(0, (4, 6)) を使用します。",
+                    hint_en="Use x.unflatten(0, (4, 6)).",
+                    setup_code="x = torch.randn(24, 5)",
+                    solution_code="result = x.unflatten(0, (4, 6))"
+                ),
+            ],
+            tags=["unflatten", "reshape"],
+        ),
+
+        Problem(
+            id="movedim_multiple",
+            category="reshape_permute",
+            difficulty="advanced",
+            title_ja="Moving Multiple Dimensions",
+            title_en="Moving Multiple Dimensions",
+            cases=[
+                ProblemCase(
+                    name="Move Two Dims",
+                    description_ja="テンソル x [2, 3, 4, 5] の dim 0,1 を dim 2,3 に移動して [4, 5, 2, 3] にしてください。",
+                    description_en="Move dims 0,1 to 2,3 for x [2, 3, 4, 5].",
+                    hint_ja="torch.movedim(x, (0, 1), (2, 3)) を使用します。",
+                    hint_en="Use torch.movedim(x, (0, 1), (2, 3)).",
+                    setup_code="x = torch.randn(2, 3, 4, 5)",
+                    solution_code="result = torch.movedim(x, (0, 1), (2, 3))"
+                ),
+                ProblemCase(
+                    name="Reverse Dims",
+                    description_ja="テンソル x [2, 3, 4] の次元順序を逆にして [4, 3, 2] にしてください。",
+                    description_en="Reverse dimension order of x [2, 3, 4].",
+                    hint_ja="torch.movedim(x, (0, 1, 2), (2, 1, 0)) を使用します。",
+                    hint_en="Use torch.movedim(x, (0, 1, 2), (2, 1, 0)).",
+                    setup_code="x = torch.randn(2, 3, 4)",
+                    solution_code="result = torch.movedim(x, (0, 1, 2), (2, 1, 0))"
+                ),
+            ],
+            tags=["movedim", "advanced"],
+        ),
+
+        Problem(
+            id="reshape_chain",
+            category="reshape_permute",
+            difficulty="advanced",
+            title_ja="Chained Reshape Operations",
+            title_en="Chained Reshape Operations",
+            cases=[
+                ProblemCase(
+                    name="Flatten then Unflatten",
+                    description_ja="テンソル x [2, 3, 4] を平坦化して、再度 [6, 4] に変形してください。",
+                    description_en="Flatten x [2, 3, 4] then reshape to [6, 4].",
+                    hint_ja="x.flatten().view(6, 4) を使用します。",
+                    hint_en="Use x.flatten().view(6, 4).",
+                    setup_code="x = torch.randn(2, 3, 4)",
+                    solution_code="result = x.flatten().view(6, 4)"
+                ),
+                ProblemCase(
+                    name="Permute then Flatten",
+                    description_ja="テンソル x [2, 3, 4] を (1, 2, 0) に並び替えてから平坦化してください。",
+                    description_en="Permute x to (1,2,0) then flatten.",
+                    hint_ja="x.permute(1, 2, 0).flatten() を使用します。",
+                    hint_en="Use x.permute(1, 2, 0).flatten().",
+                    setup_code="x = torch.randn(2, 3, 4)",
+                    solution_code="result = x.permute(1, 2, 0).flatten()"
+                ),
+            ],
+            tags=["chain", "advanced"],
+        ),
+
+        Problem(
+            id="batch_reshape",
+            category="reshape_permute",
+            difficulty="intermediate",
+            title_ja="Batch-Aware Reshape",
+            title_en="Batch-Aware Reshape",
+            cases=[
+                ProblemCase(
+                    name="Reshape Last Dims",
+                    description_ja="テンソル x [8, 12] の最後の次元のみを [3, 4] に分割して [8, 3, 4] にしてください。",
+                    description_en="Reshape last dim of x [8, 12] to [8, 3, 4].",
+                    hint_ja="x.view(8, 3, 4) を使用します。",
+                    hint_en="Use x.view(8, 3, 4).",
+                    setup_code="x = torch.randn(8, 12)",
+                    solution_code="result = x.view(8, 3, 4)"
+                ),
+                ProblemCase(
+                    name="Dynamic Batch",
+                    description_ja="任意のバッチサイズのテンソル x [B, 12] を [B, 3, 4] にリシェイプしてください。xの形状は[16, 12]です。",
+                    description_en="Reshape x of shape [B, 12] to [B, 3, 4]. x has shape [16, 12].",
+                    hint_ja="x.view(-1, 3, 4) または x.view(x.size(0), 3, 4) を使用します。",
+                    hint_en="Use x.view(-1, 3, 4) or x.view(x.size(0), 3, 4).",
+                    setup_code="x = torch.randn(16, 12)",
+                    solution_code="result = x.view(-1, 3, 4)"
+                ),
+            ],
+            tags=["batch", "reshape"],
+        ),
+
+        Problem(
+            id="tile_operations",
+            category="reshape_permute",
+            difficulty="intermediate",
+            title_ja="Tile Operations",
+            title_en="Tile Operations",
+            cases=[
+                ProblemCase(
+                    name="Tile 1D",
+                    description_ja="ベクトル x [3] を2回タイルして [6] にしてください。",
+                    description_en="Tile vector x [3] to get [6].",
+                    hint_ja="torch.tile(x, (2,)) を使用します。",
+                    hint_en="Use torch.tile(x, (2,)).",
+                    setup_code="x = torch.tensor([1, 2, 3])",
+                    solution_code="result = torch.tile(x, (2,))"
+                ),
+                ProblemCase(
+                    name="Tile 2D",
+                    description_ja="行列 x [2, 3] を縦2回、横3回タイルして [4, 9] にしてください。",
+                    description_en="Tile matrix x [2, 3] to get [4, 9].",
+                    hint_ja="torch.tile(x, (2, 3)) を使用します。",
+                    hint_en="Use torch.tile(x, (2, 3)).",
+                    setup_code="x = torch.randn(2, 3)",
+                    solution_code="result = torch.tile(x, (2, 3))"
+                ),
+            ],
+            tags=["tile", "repeat"],
+        ),
+
+        Problem(
+            id="ravel_patterns",
             category="reshape_permute",
             difficulty="beginner",
-            title_ja="次元の入れ替え（2D）",
-            title_en="Transpose 2D",
-            description_ja="形状 [3, 5] のテンソルを転置して [5, 3] にしてください。",
-            description_en="Transpose a tensor of shape [3, 5] to [5, 3].",
-            hint_ja="transpose(0, 1) または .T を使用します。",
-            hint_en="Use transpose(0, 1) or .T.",
-            setup_code="x = torch.randn(3, 5)",
-            solution_code="""result = x.transpose(0, 1)
-# Alternative: result = x.T""",
-            tags=["transpose", "2d"],
-        ),
-
-        # Intermediate level - More complex reshaping
-        Problem(
-            id="reshape_005",
-            category="reshape_permute",
-            difficulty="intermediate",
-            title_ja="チャネル順の変更: NCHW → NHWC",
-            title_en="Channel Order Change: NCHW → NHWC",
-            description_ja="形状 [32, 3, 224, 224] (バッチ, チャネル, 高さ, 幅) のテンソルを [32, 224, 224, 3] に変換してください。",
-            description_en="Convert a tensor of shape [32, 3, 224, 224] (batch, channel, height, width) to [32, 224, 224, 3].",
-            hint_ja="permute(0, 2, 3, 1) を使用します。",
-            hint_en="Use permute(0, 2, 3, 1).",
-            setup_code="x = torch.randn(32, 3, 224, 224)",
-            solution_code="result = x.permute(0, 2, 3, 1)",
-            tags=["permute", "channel", "cv", "nhwc"],
-        ),
-
-        Problem(
-            id="reshape_006",
-            category="reshape_permute",
-            difficulty="intermediate",
-            title_ja="バッチ行列の転置",
-            title_en="Batch Matrix Transpose",
-            description_ja="形状 [32, 10, 20] のバッチ行列の最後の2次元を転置してください。",
-            description_en="Transpose the last 2 dimensions of a batch matrix of shape [32, 10, 20].",
-            hint_ja="transpose(-2, -1) を使用します。",
-            hint_en="Use transpose(-2, -1).",
-            setup_code="x = torch.randn(32, 10, 20)",
-            solution_code="result = x.transpose(-2, -1)",
-            tags=["transpose", "batch", "negative_index"],
-        ),
-
-        Problem(
-            id="reshape_007",
-            category="reshape_permute",
-            difficulty="intermediate",
-            title_ja="3D テンソルの整形",
-            title_en="3D Tensor Reshaping",
-            description_ja="形状 [4, 6, 8] のテンソルを [2, 12, 8] に変換してください。",
-            description_en="Reshape a tensor of shape [4, 6, 8] to [2, 12, 8].",
-            hint_ja="view() または reshape() を使用します。",
-            hint_en="Use view() or reshape().",
-            setup_code="x = torch.randn(4, 6, 8)",
-            solution_code="""result = x.view(2, 12, 8)
-# Alternative: result = x.reshape(2, 12, 8)""",
-            tags=["reshape", "3d"],
-        ),
-
-        Problem(
-            id="reshape_008",
-            category="reshape_permute",
-            difficulty="intermediate",
-            title_ja="シーケンス長とバッチの入れ替え",
-            title_en="Swap Sequence Length and Batch",
-            description_ja="形状 [128, 32, 512] (seq_len, batch, hidden) のテンソルを [32, 128, 512] (batch, seq_len, hidden) に変換してください。",
-            description_en="Convert a tensor of shape [128, 32, 512] (seq_len, batch, hidden) to [32, 128, 512] (batch, seq_len, hidden).",
-            hint_ja="transpose(0, 1) を使用します。",
-            hint_en="Use transpose(0, 1).",
-            setup_code="x = torch.randn(128, 32, 512)",
-            solution_code="result = x.transpose(0, 1)",
-            tags=["transpose", "nlp", "sequence"],
-        ),
-
-        Problem(
-            id="reshape_009",
-            category="reshape_permute",
-            difficulty="intermediate",
-            title_ja="マルチヘッド用のreshape",
-            title_en="Reshape for Multi-Head",
-            description_ja="形状 [32, 128, 512] のテンソルを8ヘッドに分割: [32, 128, 8, 64] に変換してください。",
-            description_en="Split a tensor of shape [32, 128, 512] into 8 heads: convert to [32, 128, 8, 64].",
-            hint_ja="view(32, 128, 8, 64) を使用します。",
-            hint_en="Use view(32, 128, 8, 64).",
-            setup_code="x = torch.randn(32, 128, 512)",
-            solution_code="result = x.view(32, 128, 8, 64)",
-            tags=["reshape", "attention", "multi_head"],
-        ),
-
-        Problem(
-            id="reshape_010",
-            category="reshape_permute",
-            difficulty="intermediate",
-            title_ja="マルチヘッドの次元順序変更",
-            title_en="Multi-Head Dimension Reorder",
-            description_ja="形状 [32, 128, 8, 64] のテンソルを [32, 8, 128, 64] (batch, heads, seq_len, head_dim) に変換してください。",
-            description_en="Convert a tensor of shape [32, 128, 8, 64] to [32, 8, 128, 64] (batch, heads, seq_len, head_dim).",
-            hint_ja="transpose(1, 2) を使用します。",
-            hint_en="Use transpose(1, 2).",
-            setup_code="x = torch.randn(32, 128, 8, 64)",
-            solution_code="result = x.transpose(1, 2)",
-            tags=["transpose", "attention", "multi_head"],
-        ),
-
-        # Advanced level - Complex permutations and contiguous operations
-       Problem(
-            id="reshape_011",
-            category="reshape_permute",
-            difficulty="advanced",
-            title_ja="contiguous化が必要なreshape",
-            title_en="Reshape Requiring Contiguous",
-            description_ja="形状 [32, 8, 128, 64] のテンソル（transpose後）を [32, 8, 128*64] に変換してください。",
-            description_en="Reshape a tensor of shape [32, 8, 128, 64] (after transpose) to [32, 8, 128*64].",
-            hint_ja="contiguous() を使ってから view() します。",
-            hint_en="Use contiguous() before view().",
-            setup_code="x = torch.randn(32, 128, 8, 64).transpose(1, 2)",
-            solution_code="result = x.contiguous().view(32, 8, 128*64)",
-            tags=["contiguous", "view", "attention"],
-        ),
-
-        Problem(
-            id="reshape_012",
-            category="reshape_permute",
-            difficulty="advanced",
-            title_ja="複雑な次元の並べ替え",
-            title_en="Complex Dimension Permutation",
-            description_ja="形状 [2, 3, 4, 5, 6] のテンソルを [5, 3, 6, 2, 4] に並べ替えてください。",
-            description_en="Permute a tensor of shape [2, 3, 4, 5, 6] to [5, 3, 6, 2, 4].",
-            hint_ja="permute(3, 1, 4, 0, 2) を使用します。",
-            hint_en="Use permute(3, 1, 4, 0, 2).",
-            setup_code="x = torch.randn(2, 3, 4, 5, 6)",
-            solution_code="result = x.permute(3, 1, 4, 0, 2)",
-            tags=["permute", "5d", "complex"],
-        ),
-
-        Problem(
-            id="reshape_013",
-            category="reshape_permute",
-            difficulty="advanced",
-            title_ja="パッチ抽出のためのreshape",
-            title_en="Reshape for Patch Extraction",
-            description_ja="形状 [1, 3, 224, 224] の画像を 16x16 パッチに分割し、[1, 196, 768] に変換してください（ViT用）。",
-            description_en="Split an image of shape [1, 3, 224, 224] into 16x16 patches and convert to [1, 196, 768] (for ViT).",
-            hint_ja="unfold を使うか、view + permute を組み合わせます。ここでは view を使った解法です。",
-            hint_en="Use unfold or combine view + permute. This solution uses view.",
-            setup_code="x = torch.randn(1, 3, 224, 224)",
-            solution_code="""# Reshape to extract patches: (1, 3, 14, 16, 14, 16)
-x_reshaped = x.view(1, 3, 14, 16, 14, 16)
-# Permute to (1, 14, 14, 3, 16, 16)
-x_permuted = x_reshaped.permute(0, 2, 4, 1, 3, 5)
-# Flatten patches: (1, 196, 768)
-result = x_permuted.reshape(1, 14*14, 3*16*16)
-# Note: Alternatively, use torch.nn.Unfold""",
-            tags=["reshape", "permute", "vit", "patches", "cv"],
-        ),
-
-        Problem(
-            id="reshape_014",
-            category="reshape_permute",
-            difficulty="advanced",
-            title_ja="depthwise conv の出力整形",
-            title_en="Depthwise Conv Output Reshaping",
-            description_ja="形状 [32, 256, 28, 28] のテンソルをグループ毎に分けて [32, 8, 32, 28, 28] に変換してください。",
-            description_en="Split a tensor of shape [32, 256, 28, 28] by groups into [32, 8, 32, 28, 28].",
-            hint_ja="view(32, 8, 32, 28, 28) を使用します。",
-            hint_en="Use view(32, 8, 32, 28, 28).",
-            setup_code="x = torch.randn(32, 256, 28, 28)",
-            solution_code="result = x.view(32, 8, 32, 28, 28)",
-            tags=["reshape", "cv", "groups"],
-        ),
-
-        # Expert level - Very complex or tricky operations
-        Problem(
-            id="reshape_015",
-            category="reshape_permute",
-            difficulty="expert",
-            title_ja="3D畳み込みの入力変換",
-            title_en="3D Convolution Input Conversion",
-            description_ja="形状 [16, 10, 3, 112, 112] (batch, frames, channels, H, W) のビデオテンソルを [16, 3, 10, 112, 112] (batch, channels, frames, H, W) に変換してください。",
-            description_en="Convert a video tensor of shape [16, 10, 3, 112, 112] (batch, frames, channels, H, W) to [16, 3, 10, 112, 112] (batch, channels, frames, H, W).",
-            hint_ja="permute を使って次元を並べ替えます。",
-            hint_en="Use permute to reorder dimensions.",
-            setup_code="x = torch.randn(16, 10, 3, 112, 112)",
-            solution_code="result = x.permute(0, 2, 1, 3, 4)",
-            tags=["permute", "3d_conv", "video", "cv"],
+            title_ja="Ravel Patterns",
+            title_en="Ravel Patterns",
+            cases=[
+                ProblemCase(
+                    name="Ravel 2D",
+                    description_ja="行列 x [3, 4] を1次元に変換してください。",
+                    description_en="Convert matrix x [3, 4] to 1D.",
+                    hint_ja="x.ravel() または torch.ravel(x) を使用します。",
+                    hint_en="Use x.ravel() or torch.ravel(x).",
+                    setup_code="x = torch.randn(3, 4)",
+                    solution_code="result = x.ravel()"
+                ),
+                ProblemCase(
+                    name="Ravel 3D",
+                    description_ja="テンソル x [2, 3, 4] を1次元に変換してください。",
+                    description_en="Convert tensor x [2, 3, 4] to 1D.",
+                    hint_ja="torch.ravel(x) を使用します。",
+                    hint_en="Use torch.ravel(x).",
+                    setup_code="x = torch.randn(2, 3, 4)",
+                    solution_code="result = torch.ravel(x)"
+                ),
+            ],
+            tags=["ravel", "flatten"],
         ),
     ]
 
     return problems
+

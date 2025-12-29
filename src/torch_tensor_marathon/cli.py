@@ -194,30 +194,28 @@ class TensorMarathonCLI:
         # Check solution
         console.print("\n[bold]🔍 チェック中 / Checking...[/bold]")
 
-        result = self.checker.check_solution(
-            setup_code=problem.setup_code,
-            user_code=user_code,
-            solution_code=problem.solution_code,
-            expected_shape=problem.expected_shape,
-        )
+        # Check solution
+        console.print("\n[bold]🔍 チェック中 / Checking...[/bold]")
+
+        result = self.checker.check_problem(problem, user_code)
 
         # Display result
         if result.is_correct:
             console.print(Panel(
                 f"[bold green]{t('correct', lang)}[/bold green]\n\n"
-                f"{t('result_shape', lang)}: {result.actual_shape}",
+                f"{result.message}",
                 title="✅ Success",
                 border_style="green",
                 box=box.DOUBLE
             ))
         else:
             error_msg = result.message
-            if result.error_type == "shape":
-                error_msg = t("shape_error", lang,
-                             expected=result.expected_shape,
-                             actual=result.actual_shape)
+            # If detailed error type exists and likely applies to all or the first failure
+            if result.error_type == "shape" and result.expected_shape:
+                # Append specific hint if useful, though message likely contains details
+                pass
             elif result.error_type == "value":
-                error_msg = t("value_error", lang)
+                pass
 
             console.print(Panel(
                 f"[bold red]{t('incorrect', lang)}[/bold red]\n\n"

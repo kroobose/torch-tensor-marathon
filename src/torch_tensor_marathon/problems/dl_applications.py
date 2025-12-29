@@ -1,265 +1,511 @@
-"""Deep Learning Applications problems - practical scenarios from real DL tasks."""
+"""Deep Learning Applications problems - neural network layers and functions."""
 
 from typing import List
-from torch_tensor_marathon.problem import Problem
+import torch.nn.functional as F
+from torch_tensor_marathon.problem import Problem, ProblemCase
 
 
 def get_dl_applications_problems() -> List[Problem]:
-    """Get all Deep Learning Applications category problems."""
+    """Get all DL Applications category problems."""
 
     problems = [
-        # Intermediate level - Practical DL scenarios
         Problem(
-            id="dl_001",
+            id="dl_activation_functions",
+            category="dl_applications",
+            difficulty="beginner",
+            title_ja="Activation Functions",
+            title_en="Activation Functions",
+            cases=[
+                ProblemCase(
+                    name="ReLU",
+                    description_ja="テンソル x に ReLU 活性化関数を適用してください。",
+                    description_en="Apply ReLU activation to x.",
+                    hint_ja="F.relu(x) を使用します。",
+                    hint_en="Use F.relu(x).",
+                    setup_code="x = torch.randn(5)",
+                    solution_code="result = F.relu(x)"
+                ),
+                ProblemCase(
+                    name="Sigmoid",
+                    description_ja="テンソル x に Sigmoid 活性化関数を適用してください。",
+                    description_en="Apply Sigmoid activation to x.",
+                    hint_ja="torch.sigmoid(x) を使用します。",
+                    hint_en="Use torch.sigmoid(x).",
+                    setup_code="x = torch.randn(5)",
+                    solution_code="result = torch.sigmoid(x)"
+                ),
+                ProblemCase(
+                    name="Softmax",
+                    description_ja="テンソル x [10, 5] の最後の次元に対して Softmax を適用してください。",
+                    description_en="Apply Softmax to last dim of x.",
+                    hint_ja="F.softmax(x, dim=-1) を使用します。",
+                    hint_en="Use F.softmax(x, dim=-1).",
+                    setup_code="x = torch.randn(10, 5)",
+                    solution_code="result = F.softmax(x, dim=-1)"
+                ),
+            ],
+            tags=["relu", "sigmoid", "softmax"],
+        ),
+
+        Problem(
+            id="dl_vision_layers",
             category="dl_applications",
             difficulty="intermediate",
-            title_ja="Vision Transformer のパッチ埋め込み",
-            title_en="Vision Transformer Patch Embedding",
-            description_ja="形状 [1, 3, 224, 224] の画像を 16x16 パッチに分割し、[1, 196, 768] に変換してください（パッチサイズ16、196=14*14パッチ、768=3*16*16）。",
-            description_en="Split an image of shape [1, 3, 224, 224] into 16x16 patches and reshape to [1, 196, 768] (patch size 16, 196=14*14 patches, 768=3*16*16).",
-            hint_ja="unfold または view + permute + reshape を使用します。",
-            hint_en="Use unfold or view + permute + reshape.",
-            setup_code="x = torch.randn(1, 3, 224, 224)",
-            solution_code="""# Using unfold
-patches = x.unfold(2, 16, 16).unfold(3, 16, 16)  # [1, 3, 14, 14, 16, 16]
-result = patches.permute(0, 2, 3, 1, 4, 5).reshape(1, 196, 768)""",
-            tags=["vit", "patches", "cv", "unfold"],
+            title_ja="Vision Layers",
+            title_en="Vision Layers",
+            cases=[
+                ProblemCase(
+                    name="Conv2d",
+                    description_ja="画像 x [B, C, H, W] に重み weight [OutC, C, K, K] で畳み込み(kernel=3, stride=1, padding=1)を適用してください。",
+                    description_en="Apply conv2d with k=3, s=1, p=1.",
+                    hint_ja="F.conv2d(x, weight, padding=1) を使用します。",
+                    hint_en="Use F.conv2d(x, weight, padding=1).",
+                    setup_code="""x = torch.randn(2, 3, 32, 32)
+weight = torch.randn(16, 3, 3, 3)""",
+                    solution_code="result = F.conv2d(x, weight, padding=1)"
+                ),
+                ProblemCase(
+                    name="MaxPool2d",
+                    description_ja="画像 x [B, C, H, W] に 2x2 の最大プーリング (stride=2) を適用してください。",
+                    description_en="Apply 2x2 max pool with stride 2.",
+                    hint_ja="F.max_pool2d(x, 2) を使用します。",
+                    hint_en="Use F.max_pool2d(x, 2).",
+                    setup_code="x = torch.randn(2, 16, 32, 32)",
+                    solution_code="result = F.max_pool2d(x, kernel_size=2, stride=2)"
+                ),
+                ProblemCase(
+                    name="Global Avg Pool",
+                    description_ja="画像 x [B, C, H, W] に Global Average Pooling を適用して [B, C, 1, 1] にしてください。",
+                    description_en="Apply Global Average Pooling.",
+                    hint_ja="F.adaptive_avg_pool2d(x, (1, 1)) を使用します。",
+                    hint_en="Use F.adaptive_avg_pool2d(x, (1, 1)).",
+                    setup_code="x = torch.randn(2, 64, 8, 8)",
+                    solution_code="result = F.adaptive_avg_pool2d(x, (1, 1))"
+                ),
+                 ProblemCase(
+                    name="Pixel Shuffle",
+                    description_ja="テンソル x [1, 9, 8, 8] を pixel_shuffle (upscale_factor=3) で [1, 1, 24, 24] にしてください。",
+                    description_en="Apply pixel_shuffle with factor 3.",
+                    hint_ja="F.pixel_shuffle(x, 3) を使用します。",
+                    hint_en="Use F.pixel_shuffle(x, 3).",
+                    setup_code="x = torch.randn(1, 9, 8, 8)",
+                    solution_code="result = F.pixel_shuffle(x, 3)"
+                ),
+            ],
+            tags=["conv2d", "pooling", "pixel_shuffle"],
         ),
 
         Problem(
-            id="dl_002",
+            id="dl_loss_metrics",
             category="dl_applications",
             difficulty="intermediate",
-            title_ja="Positional Encoding の作成",
-            title_en="Create Positional Encoding",
-            description_ja="形状 [128, 512] の位置エンコーディングを作成してください。位置0~127、次元0~511で、偶数次元は sin、奇数次元は cos を使用します（簡易版：ランダムで OK）。",
-            description_en="Create a positional encoding of shape [128, 512]. For positions 0-127 and dimensions 0-511 (simplified: random is OK for this exercise).",
-            hint_ja="実際は sin/cos ですが、ここでは形状が正しければ OK です。",
-            hint_en="Actual implementation uses sin/cos, but correct shape is sufficient here.",
-            setup_code="""position = torch.arange(128).unsqueeze(1)
-div_term = torch.exp(torch.arange(0, 512, 2) * -(torch.log(torch.tensor(10000.0)) / 512))""",
-            solution_code="""result = torch.zeros(128, 512)
-result[:, 0::2] = torch.sin(position * div_term)
-result[:, 1::2] = torch.cos(position * div_term)""",
-            tags=["positional_encoding", "nlp", "transformer"],
+            title_ja="Loss & Metrics",
+            title_en="Loss & Metrics",
+            cases=[
+                ProblemCase(
+                    name="MSE Loss",
+                    description_ja="予測値 pred と正解 target の平均二乗誤差を計算してください。",
+                    description_en="Compute MSE loss.",
+                    hint_ja="F.mse_loss(pred, target) を使用します。",
+                    hint_en="Use F.mse_loss(pred, target).",
+                    setup_code="""pred = torch.randn(10)
+target = torch.randn(10)""",
+                    solution_code="result = F.mse_loss(pred, target)"
+                ),
+                ProblemCase(
+                    name="Cross Entropy",
+                    description_ja="ロジット logits [B, C] と正解ラベル target [B] からクロスエントロピー誤差を計算してください。",
+                    description_en="Compute Cross Entropy loss.",
+                    hint_ja="F.cross_entropy(logits, target) を使用します。",
+                    hint_en="Use F.cross_entropy(logits, target).",
+                    setup_code="""B, C = 4, 3
+logits = torch.randn(B, C)
+target = torch.tensor([0, 1, 2, 0])""",
+                    solution_code="result = F.cross_entropy(logits, target)"
+                ),
+                ProblemCase(
+                    name="Cosine Similarity",
+                    description_ja="ベクトルバッチ x1, x2 [B, D] のコサイン類似度を計算してください (dim=1)。",
+                    description_en="Compute cosine similarity along dim 1.",
+                    hint_ja="F.cosine_similarity(x1, x2, dim=1) を使用します。",
+                    hint_en="Use F.cosine_similarity(x1, x2, dim=1).",
+                    setup_code="""x1 = torch.randn(10, 5)
+x2 = torch.randn(10, 5)""",
+                    solution_code="result = F.cosine_similarity(x1, x2, dim=1)"
+                ),
+            ],
+            tags=["loss", "mse", "cross_entropy", "cosine"],
         ),
 
         Problem(
-            id="dl_003",
+            id="dl_linear_ops",
             category="dl_applications",
             difficulty="intermediate",
-            title_ja="Attention マスクの作成（パディング用）",
-            title_en="Create Attention Mask (for Padding)",
-            description_ja="形状 [32] のシーケンス長テンソル（各値は実際の長さ、最大128）から、形状 [32, 128] のパディングマスクを作成してください（実際の長さまでTrue、それ以降False）。",
-            description_en="Create a padding mask of shape [32, 128] from a sequence length tensor of shape [32] (each value is actual length, max 128). True up to actual length, False afterwards.",
-            hint_ja="arange と比較を組み合わせます。",
-            hint_en="Combine arange and comparison.",
-            setup_code="seq_lengths = torch.randint(50, 128, (32,))",
-            solution_code="""positions = torch.arange(128).unsqueeze(0)  # [1, 128]
-result = positions < seq_lengths.unsqueeze(1)  # [32, 128]""",
-            tags=["mask", "padding", "nlp"],
+            title_ja="Linear Operations",
+            title_en="Linear Operations",
+            cases=[
+                ProblemCase(
+                    name="Linear Layer",
+                    description_ja="入力 x [B, I] と重み weight [O, I], バイアス bias [O] を使って線形変換を計算してください。",
+                    description_en="Compute linear transformation.",
+                    hint_ja="F.linear(x, weight, bias) を使用します。",
+                    hint_en="Use F.linear(x, weight, bias).",
+                    setup_code="""B, I, O = 4, 10, 5
+x = torch.randn(B, I)
+weight = torch.randn(O, I)
+bias = torch.randn(O)""",
+                    solution_code="result = F.linear(x, weight, bias)"
+                ),
+            ],
+            tags=["linear"],
         ),
 
         Problem(
-            id="dl_004",
+            id="dl_utilities",
+            category="dl_applications",
+            difficulty="advanced",
+            title_ja="DL Utility Ops",
+            title_en="DL Utility Ops",
+            cases=[
+                ProblemCase(
+                    name="Dropout",
+                    description_ja="テンソル x に確率 p=0.5 でドロップアウトを適用してください (training=True)。",
+                    description_en="Apply dropout with p=0.5 (training=True).",
+                    hint_ja="F.dropout(x, p=0.5, training=True) を使用します。",
+                    hint_en="Use F.dropout(x, p=0.5, training=True).",
+                    setup_code="x = torch.ones(10)",
+                    solution_code="result = F.dropout(x, p=0.5, training=True)"
+                ),
+                ProblemCase(
+                    name="Interpolate",
+                    description_ja="画像 x [1, 3, 32, 32] を [64, 64] にバイリニア補間でリサイズしてください。",
+                    description_en="Resize x to [64, 64] using bilinear interpolation.",
+                    hint_ja="F.interpolate(x, size=(64, 64), mode='bilinear', align_corners=False) を使用します。",
+                    hint_en="Use F.interpolate(..., mode='bilinear', ...).",
+                    setup_code="x = torch.randn(1, 3, 32, 32)",
+                    solution_code="result = F.interpolate(x, size=(64, 64), mode='bilinear', align_corners=False)"
+                ),
+                ProblemCase(
+                    name="Pad",
+                    description_ja="画像 x [1, 1, 4, 4] の周囲に 1px のパディングを追加してください（値は0）。",
+                    description_en="Pad x with 1px zero padding.",
+                    hint_ja="F.pad(x, (1, 1, 1, 1)) を使用します。",
+                    hint_en="Use F.pad(x, (1, 1, 1, 1)).",
+                    setup_code="x = torch.randn(1, 1, 4, 4)",
+                    solution_code="result = F.pad(x, (1, 1, 1, 1))"
+                ),
+                ProblemCase(
+                    name="Fold (Col2Im)",
+                    description_ja="スライド窓展開されたテンソル x [1, 9, 16] を画像 [1, 1, 6, 6] に戻してください (kernel=3)。",
+                    description_en="Fold tensor back to image.",
+                    hint_ja="F.fold(x, output_size=(6, 6), kernel_size=3) を使用します。",
+                    hint_en="Use F.fold(x, output_size=(6, 6), kernel_size=3).",
+                    setup_code="x = torch.randn(1, 9, 16)",
+                    solution_code="result = F.fold(x, output_size=(6, 6), kernel_size=3)"
+                ),
+            ],
+            tags=["dropout", "interpolate", "pad", "fold"],
+        ),
+
+        # === NEW PROBLEMS ===
+
+        Problem(
+            id="mha_reshape",
+            category="dl_applications",
+            difficulty="advanced",
+            title_ja="Multi-Head Attention Reshape",
+            title_en="Multi-Head Attention Reshape",
+            cases=[
+                ProblemCase(
+                    name="Split Heads",
+                    description_ja="テンソル x [B, L, D] を [B, L, num_heads, head_dim] に変換し、[B, num_heads, L, head_dim] に permute してください。",
+                    description_en="Split x into heads and permute to [B, H, L, D].",
+                    hint_ja="x.view(B, L, num_heads, head_dim).permute(0, 2, 1, 3) を使用します。",
+                    hint_en="Use view and permute.",
+                    setup_code="""B, L, D = 2, 8, 64
+num_heads = 4
+head_dim = D // num_heads
+x = torch.randn(B, L, D)""",
+                    solution_code="result = x.view(B, L, num_heads, head_dim).permute(0, 2, 1, 3)"
+                ),
+                ProblemCase(
+                    name="Merge Heads",
+                    description_ja="テンソル x [B, num_heads, L, head_dim] を [B, L, D] に戻してください。",
+                    description_en="Merge heads back to [B, L, D].",
+                    hint_ja="x.permute(0, 2, 1, 3).reshape(B, L, D) を使用します。",
+                    hint_en="Use permute and reshape.",
+                    setup_code="""B, L, D = 2, 8, 64
+num_heads = 4
+head_dim = D // num_heads
+x = torch.randn(B, num_heads, L, head_dim)""",
+                    solution_code="result = x.permute(0, 2, 1, 3).reshape(B, L, D)"
+                ),
+            ],
+            tags=["mha", "attention", "reshape"],
+        ),
+
+        Problem(
+            id="layer_norm_reshape",
             category="dl_applications",
             difficulty="intermediate",
-            title_ja="Mixup データ拡張",
-            title_en="Mixup Data Augmentation",
-            description_ja="形状 [32, 3, 224, 224] の画像バッチに対して、lambda=0.3 で Mixup を適用してください（各画像とランダムにシャッフルした画像を混合）。",
-            description_en="Apply Mixup with lambda=0.3 to a batch of images of shape [32, 3, 224, 224] (mix each image with a randomly shuffled image).",
-            hint_ja="torch.randperm でインデックスをシャッフルし、重み付き和を取ります。",
-            hint_en="Use torch.randperm to shuffle indices and take weighted sum.",
-            setup_code="""x = torch.randn(32, 3, 224, 224)
-lam = 0.3""",
-            solution_code="""indices = torch.randperm(32)
-result = lam * x + (1 - lam) * x[indices]""",
-            tags=["mixup", "augmentation", "cv"],
+            title_ja="Layer Normalization",
+            title_en="Layer Normalization",
+            cases=[
+                ProblemCase(
+                    name="LayerNorm 1D",
+                    description_ja="テンソル x [B, D] に Layer Normalization を適用してください。",
+                    description_en="Apply LayerNorm to x [B, D].",
+                    hint_ja="F.layer_norm(x, normalized_shape=(D,)) を使用します。",
+                    hint_en="Use F.layer_norm(x, (D,)).",
+                    setup_code="""B, D = 4, 16
+x = torch.randn(B, D)""",
+                    solution_code="result = F.layer_norm(x, normalized_shape=(D,))"
+                ),
+                ProblemCase(
+                    name="LayerNorm 2D",
+                    description_ja="テンソル x [B, L, D] の最後の次元に Layer Normalization を適用してください。",
+                    description_en="Apply LayerNorm to last dim of x [B, L, D].",
+                    hint_ja="F.layer_norm(x, normalized_shape=(D,)) を使用します。",
+                    hint_en="Use F.layer_norm(x, (D,)).",
+                    setup_code="""B, L, D = 4, 8, 16
+x = torch.randn(B, L, D)""",
+                    solution_code="result = F.layer_norm(x, normalized_shape=(D,))"
+                ),
+            ],
+            tags=["layer_norm", "normalization"],
         ),
 
         Problem(
-            id="dl_005",
+            id="position_encoding",
             category="dl_applications",
             difficulty="advanced",
-            title_ja="Focal Loss の重み計算",
-            title_en="Focal Loss Weight Computation",
-            description_ja="形状 [32, 10] のロジットと形状 [32] のラベルから、Focal Loss 用の重み (1 - p_t)^gamma を計算してください（gamma=2.0）。結果の形状は [32] です。",
-            description_en="Compute Focal Loss weights (1 - p_t)^gamma from logits of shape [32, 10] and labels of shape [32] (gamma=2.0). Result shape is [32].",
-            hint_ja="softmax で確率を計算し、正解クラスの確率を gather します。",
-            hint_en="Compute probabilities with softmax and gather correct class probabilities.",
-            setup_code="""logits = torch.randn(32, 10)
-labels = torch.randint(0, 10, (32,))
-gamma = 2.0""",
-            solution_code="""probs = F.softmax(logits, dim=1)
-p_t = torch.gather(probs, 1, labels.unsqueeze(1)).squeeze(1)
-result = (1 - p_t) ** gamma""",
-            tags=["focal_loss", "ml", "weights"],
+            title_ja="Position Encoding",
+            title_en="Position Encoding",
+            cases=[
+                ProblemCase(
+                    name="Simple Position",
+                    description_ja="シーケンス長 L のポジション [0, 1, ..., L-1] を [1, L, 1] として作成し、入力 x [B, L, D] にブロードキャストして加算してください。",
+                    description_en="Create position tensor [1, L, 1] and add to x [B, L, D].",
+                    hint_ja="torch.arange(L).view(1, L, 1) + x を使用します。",
+                    hint_en="Use torch.arange(L).view(1, L, 1) + x.",
+                    setup_code="""B, L, D = 2, 8, 16
+x = torch.randn(B, L, D)""",
+                    solution_code="result = torch.arange(L).view(1, L, 1).float() + x"
+                ),
+                ProblemCase(
+                    name="Learned Position",
+                    description_ja="位置埋め込み pos_emb [max_len, D] からシーケンス長 L 分を取り出して x [B, L, D] に加算してください。",
+                    description_en="Add position embedding to x.",
+                    hint_ja="x + pos_emb[:L] を使用します。",
+                    hint_en="Use x + pos_emb[:L].",
+                    setup_code="""B, L, D = 2, 8, 16
+max_len = 64
+x = torch.randn(B, L, D)
+pos_emb = torch.randn(max_len, D)""",
+                    solution_code="result = x + pos_emb[:L]"
+                ),
+            ],
+            tags=["position", "encoding"],
         ),
 
         Problem(
-            id="dl_006",
+            id="causal_mask",
             category="dl_applications",
             difficulty="advanced",
-            title_ja="CutMix のマスク作成",
-            title_en="Create CutMix Mask",
-            description_ja="224x224 の画像用に、ランダムな位置に 56x56 の矩形マスクを作成してください。結果の形状は [224, 224] で、矩形内が True、外が False です。",
-            description_en="Create a 56x56 rectangular mask at a random position for a 224x224 image. Result shape is [224, 224], True inside rectangle, False outside.",
-            hint_ja="ランダムな左上座標を選び、スライスで True を設定します。",
-            hint_en="Choose random top-left coordinates and set True using slices.",
-            setup_code="""torch.manual_seed(42)
-x_start = torch.randint(0, 224 - 56, (1,)).item()
-y_start = torch.randint(0, 224 - 56, (1,)).item()""",
-            solution_code="""result = torch.zeros(224, 224, dtype=torch.bool)
-result[y_start:y_start+56, x_start:x_start+56] = True""",
-            tags=["cutmix", "mask", "cv", "augmentation"],
+            title_ja="Causal Attention Mask",
+            title_en="Causal Attention Mask",
+            cases=[
+                ProblemCase(
+                    name="Create Causal Mask",
+                    description_ja="シーケンス長 L の Causal Mask (上三角が True) を作成してください。",
+                    description_en="Create causal mask of size [L, L].",
+                    hint_ja="torch.triu(torch.ones(L, L), diagonal=1).bool() を使用します。",
+                    hint_en="Use torch.triu(torch.ones(L, L), diagonal=1).bool().",
+                    setup_code="L = 8",
+                    solution_code="result = torch.triu(torch.ones(L, L), diagonal=1).bool()"
+                ),
+                ProblemCase(
+                    name="Apply Causal Mask",
+                    description_ja="Attention logits [B, H, L, L] に causal_mask を適用して、マスク位置を -inf にしてください。",
+                    description_en="Apply causal mask to attention logits.",
+                    hint_ja="logits.masked_fill(causal_mask, float('-inf')) を使用します。",
+                    hint_en="Use logits.masked_fill(causal_mask, float('-inf')).",
+                    setup_code="""B, H, L = 2, 4, 8
+logits = torch.randn(B, H, L, L)
+causal_mask = torch.triu(torch.ones(L, L), diagonal=1).bool()""",
+                    solution_code="result = logits.masked_fill(causal_mask, float('-inf'))"
+                ),
+            ],
+            tags=["causal", "mask", "attention"],
         ),
 
         Problem(
-            id="dl_007",
+            id="batch_token_masking",
+            category="dl_applications",
+            difficulty="intermediate",
+            title_ja="Batch and Token Masking",
+            title_en="Batch and Token Masking",
+            cases=[
+                ProblemCase(
+                    name="Padding Mask",
+                    description_ja="パディングインデックス pad_idx=0 に対応するマスク [B, L] を作成してください。",
+                    description_en="Create padding mask for pad_idx=0.",
+                    hint_ja="tokens == pad_idx を使用します。",
+                    hint_en="Use tokens == pad_idx.",
+                    setup_code="""B, L = 2, 8
+pad_idx = 0
+tokens = torch.tensor([[1, 2, 3, 0, 0, 0, 0, 0], [1, 2, 3, 4, 5, 0, 0, 0]])""",
+                    solution_code="result = tokens == pad_idx"
+                ),
+                ProblemCase(
+                    name="Attention Mask Expand",
+                    description_ja="パディングマスク [B, L] を Attention マスク [B, 1, 1, L] に拡張してください。",
+                    description_en="Expand padding mask for attention.",
+                    hint_ja="mask.unsqueeze(1).unsqueeze(2) を使用します。",
+                    hint_en="Use mask.unsqueeze(1).unsqueeze(2).",
+                    setup_code="""B, L = 2, 8
+mask = torch.zeros(B, L).bool()
+mask[0, 3:] = True
+mask[1, 5:] = True""",
+                    solution_code="result = mask.unsqueeze(1).unsqueeze(2)"
+                ),
+            ],
+            tags=["padding", "mask", "attention"],
+        ),
+
+        Problem(
+            id="embedding_operations",
+            category="dl_applications",
+            difficulty="beginner",
+            title_ja="Embedding Operations",
+            title_en="Embedding Operations",
+            cases=[
+                ProblemCase(
+                    name="Embedding Lookup",
+                    description_ja="埋め込み行列 embedding [V, D] からトークンインデックス tokens [B, L] の埋め込みを取得してください。",
+                    description_en="Get embeddings for tokens from embedding matrix.",
+                    hint_ja="F.embedding(tokens, embedding) または embedding[tokens] を使用します。",
+                    hint_en="Use F.embedding(tokens, embedding).",
+                    setup_code="""V, D = 1000, 64
+B, L = 2, 8
+embedding = torch.randn(V, D)
+tokens = torch.randint(0, V, (B, L))""",
+                    solution_code="result = F.embedding(tokens, embedding)"
+                ),
+                ProblemCase(
+                    name="One-hot Embedding",
+                    description_ja="トークンインデックス tokens [B, L] を One-hot エンコード [B, L, V] にしてください。",
+                    description_en="One-hot encode tokens to [B, L, V].",
+                    hint_ja="F.one_hot(tokens, V) を使用します。",
+                    hint_en="Use F.one_hot(tokens, V).",
+                    setup_code="""V = 10
+B, L = 2, 8
+tokens = torch.randint(0, V, (B, L))""",
+                    solution_code="result = F.one_hot(tokens, V)"
+                ),
+            ],
+            tags=["embedding", "one_hot"],
+        ),
+
+        Problem(
+            id="normalization_layers",
+            category="dl_applications",
+            difficulty="intermediate",
+            title_ja="Normalization Layers",
+            title_en="Normalization Layers",
+            cases=[
+                ProblemCase(
+                    name="Batch Norm",
+                    description_ja="テンソル x [B, C, H, W] にバッチ正規化を適用してください（running_mean=0, running_var=1, weight=1, bias=0）。",
+                    description_en="Apply batch normalization to x.",
+                    hint_ja="F.batch_norm(x, running_mean, running_var, ...) を使用します。",
+                    hint_en="Use F.batch_norm(...).",
+                    setup_code="""B, C, H, W = 2, 16, 8, 8
+x = torch.randn(B, C, H, W)
+running_mean = torch.zeros(C)
+running_var = torch.ones(C)""",
+                    solution_code="result = F.batch_norm(x, running_mean, running_var, training=True)"
+                ),
+                ProblemCase(
+                    name="Group Norm",
+                    description_ja="テンソル x [B, C, H, W] にグループ正規化を適用してください (num_groups=4)。",
+                    description_en="Apply group normalization with 4 groups.",
+                    hint_ja="F.group_norm(x, num_groups=4) を使用します。",
+                    hint_en="Use F.group_norm(x, num_groups=4).",
+                    setup_code="""B, C, H, W = 2, 16, 8, 8
+x = torch.randn(B, C, H, W)""",
+                    solution_code="result = F.group_norm(x, num_groups=4)"
+                ),
+            ],
+            tags=["batch_norm", "group_norm"],
+        ),
+
+        Problem(
+            id="attention_patterns",
+            category="dl_applications",
+            difficulty="expert",
+            title_ja="Attention Patterns",
+            title_en="Attention Patterns",
+            cases=[
+                ProblemCase(
+                    name="Scaled Dot Product",
+                    description_ja="Q, K, V [B, H, L, D] から Scaled Dot-Product Attention を計算してください。",
+                    description_en="Compute scaled dot-product attention.",
+                    hint_ja="F.scaled_dot_product_attention(Q, K, V) を使用します (PyTorch 2.0+)。",
+                    hint_en="Use F.scaled_dot_product_attention (PyTorch 2.0+).",
+                    setup_code="""B, H, L, D = 2, 4, 8, 16
+Q = torch.randn(B, H, L, D)
+K = torch.randn(B, H, L, D)
+V = torch.randn(B, H, L, D)""",
+                    solution_code="result = F.scaled_dot_product_attention(Q, K, V)"
+                ),
+                ProblemCase(
+                    name="Cross Attention",
+                    description_ja="Q [B, H, Lq, D] と K, V [B, H, Lk, D] から Cross Attention を計算してください。",
+                    description_en="Compute cross attention Q @ K^T @ V.",
+                    hint_ja="F.scaled_dot_product_attention(Q, K, V) を使用します。",
+                    hint_en="Use F.scaled_dot_product_attention(Q, K, V).",
+                    setup_code="""B, H, Lq, Lk, D = 2, 4, 8, 16, 16
+Q = torch.randn(B, H, Lq, D)
+K = torch.randn(B, H, Lk, D)
+V = torch.randn(B, H, Lk, D)""",
+                    solution_code="result = F.scaled_dot_product_attention(Q, K, V)"
+                ),
+            ],
+            tags=["attention", "sdpa"],
+        ),
+
+        Problem(
+            id="unfold_operations",
             category="dl_applications",
             difficulty="advanced",
-            title_ja="Gradient Clipping の準備",
-            title_en="Prepare for Gradient Clipping",
-            description_ja="形状 [100, 512] のグラディエントテンソルのL2ノルムを計算し、それが10より大きい場合は10にクリップしたスケーリング係数を返してください。",
-            description_en="Compute the L2 norm of a gradient tensor of shape [100, 512], and if it's greater than 10, return the scaling factor to clip it to 10.",
-            hint_ja="torch.norm() でノルムを計算し、torch.where で条件分岐します。",
-            hint_en="Use torch.norm() to compute norm and torch.where for conditional.",
-            setup_code="""grad = torch.randn(100, 512)
-max_norm = 10.0""",
-            solution_code="""total_norm = torch.norm(grad)
-result = torch.where(total_norm > max_norm, max_norm / total_norm, torch.tensor(1.0))""",
-            tags=["gradient", "clipping", "training"],
-        ),
-
-        Problem(
-            id="dl_008",
-            category="dl_applications",
-            difficulty="advanced",
-            title_ja="Multi-task Loss のマスク適用",
-            title_en="Apply Multi-task Loss Mask",
-            description_ja="形状 [32, 3] の3タスクのロスと、形状 [32, 3] のタスク有効性マスク（0または1）があります。各サンプルで有効なタスクのロスのみを平均してください。結果の形状は [32] です。",
-            description_en="Given losses of shape [32, 3] for 3 tasks and a task validity mask of shape [32, 3] (0 or 1), average only valid task losses for each sample. Result shape is [32].",
-            hint_ja="マスクで無効なロスを0にし、有効なタスク数で割ります。",
-            hint_en="Mask invalid losses to 0 and divide by number of valid tasks.",
-            setup_code="""losses = torch.randn(32, 3).abs()
-mask = torch.randint(0, 2, (32, 3)).float()""",
-            solution_code="""masked_losses = losses * mask
-num_valid = mask.sum(dim=1).clamp(min=1)  # Avoid division by zero
-result = masked_losses.sum(dim=1) / num_valid""",
-            tags=["multi_task", "loss", "masking"],
-        ),
-
-        Problem(
-            id="dl_009",
-            category="dl_applications",
-            difficulty="advanced",
-            title_ja="Self-Attention の QKV 分割",
-            title_en="Split QKV for Self-Attention",
-            description_ja="形状 [32, 128, 1536] のテンソルを Q, K, V の3つに分割してください。各々の形状は [32, 128, 512] です。",
-            description_en="Split a tensor of shape [32, 128, 1536] into Q, K, V. Each has shape [32, 128, 512].",
-            hint_ja="chunk(3, dim=-1) を使用します。",
-            hint_en="Use chunk(3, dim=-1).",
-            setup_code="qkv = torch.randn(32, 128, 1536)",
-            solution_code="""Q, K, V = torch.chunk(qkv, 3, dim=-1)
-# Return Q as result for verification
-result = Q""",
-            tags=["attention", "qkv", "nlp"],
-        ),
-
-        Problem(
-            id="dl_010",
-            category="dl_applications",
-            difficulty="expert",
-            title_ja="Rotary Position Embedding（簡易版）",
-            title_en="Rotary Position Embedding (Simplified)",
-            description_ja="形状 [32, 128, 512] のテンソルの各偶数次元とその次の奇数次元をペアとして、回転変換を適用します（簡易版：ペアを入れ替えるだけでOK）。",
-            description_en="Apply rotation transformation to pairs of even and odd dimensions in a tensor of shape [32, 128, 512] (simplified: just swap pairs).",
-            hint_ja="偶数と奇数の次元を分離し、入れ替えて cat します。",
-            hint_en="Separate even and odd dimensions, swap, and cat.",
-            setup_code="x = torch.randn(32, 128, 512)",
-            solution_code="""x_even = x[..., 0::2]  # [32, 128, 256]
-x_odd = x[..., 1::2]   # [32, 128, 256]
-# Simple swap (real RoPE is more complex)
-result = torch.zeros_like(x)
-result[..., 0::2] = x_odd
-result[..., 1::2] = x_even""",
-            tags=["rope", "positional", "nlp", "advanced"],
-        ),
-
-        Problem(
-            id="dl_011",
-            category="dl_applications",
-            difficulty="expert",
-            title_ja="Grouped Convolution の入力準備",
-            title_en="Prepare Input for Grouped Convolution",
-            description_ja="形状 [32, 128, 56, 56] のテンソルを8グループに分割し、[32, 8, 16, 56, 56] に整形してください。",
-            description_en="Split a tensor of shape [32, 128, 56, 56] into 8 groups and reshape to [32, 8, 16, 56, 56].",
-            hint_ja="view を使ってグループ次元を挿入します。",
-            hint_en="Use view to insert group dimension.",
-            setup_code="x = torch.randn(32, 128, 56, 56)",
-            solution_code="result = x.view(32, 8, 16, 56, 56)",
-            tags=["grouped_conv", "cv", "reshape"],
-        ),
-
-        Problem(
-            id="dl_012",
-            category="dl_applications",
-            difficulty="expert",
-            title_ja="Label Smoothing の実装",
-            title_en="Implement Label Smoothing",
-            description_ja="形状 [32] のラベル（0~9）を、形状 [32, 10] の Label Smoothing された分布に変換してください（smoothing=0.1）。正解クラスは 0.9、他は 0.1/9。",
-            description_en="Convert labels of shape [32] (0-9) to a label-smoothed distribution of shape [32, 10] (smoothing=0.1). Correct class gets 0.9, others get 0.1/9.",
-            hint_ja="ones を作り、正解位置を scatter_ で調整します。",
-            hint_en="Create ones and adjust correct positions with scatter_.",
-            setup_code="""labels = torch.randint(0, 10, (32,))
-smoothing = 0.1
-num_classes = 10""",
-            solution_code="""# Create smoothed distribution
-result = torch.full((32, num_classes), smoothing / (num_classes - 1))
-# Set correct class probability
-result.scatter_(1, labels.unsqueeze(1), 1.0 - smoothing)""",
-            tags=["label_smoothing", "ml", "scatter"],
-        ),
-
-        Problem(
-            id="dl_013",
-            category="dl_applications",
-            difficulty="expert",
-            title_ja="Feature Pyramid の構築",
-            title_en="Build Feature Pyramid",
-            description_ja="3つの異なる解像度の特徴マップ [32, 256, 56, 56]、[32, 512, 28, 28]、[32, 1024, 14, 14] を、すべて [32, 256, 56, 56] にアップサンプル/調整して結合してください。結果の形状は [32, 768, 56, 56] です。",
-            description_en="Given 3 feature maps of different resolutions [32, 256, 56, 56], [32, 512, 28, 28], [32, 1024, 14, 14], upsample/adjust all to [32, 256, 56, 56] and concatenate. Result shape is [32, 768, 56, 56].",
-            hint_ja="F.interpolate でアップサンプルし、必要に応じて channel を調整します（この問題では単純化のため concat のみ）。",
-            hint_en="Use F.interpolate for upsampling (simplified: just assume channels are already adjusted).",
-            setup_code="""feat1 = torch.randn(32, 256, 56, 56)
-feat2 = torch.randn(32, 256, 28, 28)
-feat3 = torch.randn(32, 256, 14, 14)""",
-            solution_code="""# Upsample to same spatial size
-feat2_up = F.interpolate(feat2, size=(56, 56), mode='bilinear', align_corners=False)
-feat3_up = F.interpolate(feat3, size=(56, 56), mode='bilinear', align_corners=False)
-# Concatenate
-result = torch.cat([feat1, feat2_up, feat3_up], dim=1)""",
-            tags=["fpn", "upsample", "cv", "interpolate"],
-        ),
-
-        Problem(
-            id="dl_014",
-            category="dl_applications",
-            difficulty="expert",
-            title_ja="Soft Attention Weight の正規化",
-            title_en="Normalize Soft Attention Weights",
-            description_ja="形状 [32, 8, 128, 128] の生のアテンションスコアに、形状 [32, 1, 1, 128] のマスク（0または1）を適用し、マスクされた位置を -inf にしてから softmax で正規化してください。",
-            description_en="Apply a mask of shape [32, 1, 1, 128] (0 or 1) to raw attention scores of shape [32, 8, 128, 128], set masked positions to -inf, then normalize with softmax.",
-            hint_ja="masked_fill で -inf を設定し、F.softmax します。",
-            hint_en="Use masked_fill to set -inf, then F.softmax.",
-            setup_code="""scores = torch.randn(32, 8, 128, 128)
-mask = torch.randint(0, 2, (32, 1, 1, 128)).bool()""",
-            solution_code="""# Invert mask: True means attend, False means mask
-mask_inverted = ~mask
-scores_masked = scores.masked_fill(mask_inverted, float('-inf'))
-result = F.softmax(scores_masked, dim=-1)""",
-            tags=["attention", "softmax", "masking", "nlp"],
+            title_ja="Unfold Operations",
+            title_en="Unfold Operations",
+            cases=[
+                ProblemCase(
+                    name="Unfold 2D",
+                    description_ja="画像 x [B, C, H, W] を kernel_size=3 でパッチに展開してください。",
+                    description_en="Unfold x with kernel_size=3.",
+                    hint_ja="F.unfold(x, kernel_size=3) を使用します。",
+                    hint_en="Use F.unfold(x, kernel_size=3).",
+                    setup_code="""B, C, H, W = 1, 3, 8, 8
+x = torch.randn(B, C, H, W)""",
+                    solution_code="result = F.unfold(x, kernel_size=3)"
+                ),
+                ProblemCase(
+                    name="Unfold with Stride",
+                    description_ja="画像 x [B, C, H, W] を kernel_size=3, stride=2 でパッチに展開してください。",
+                    description_en="Unfold x with kernel_size=3, stride=2.",
+                    hint_ja="F.unfold(x, kernel_size=3, stride=2) を使用します。",
+                    hint_en="Use F.unfold(x, kernel_size=3, stride=2).",
+                    setup_code="""B, C, H, W = 1, 3, 8, 8
+x = torch.randn(B, C, H, W)""",
+                    solution_code="result = F.unfold(x, kernel_size=3, stride=2)"
+                ),
+            ],
+            tags=["unfold", "im2col"],
         ),
     ]
 
     return problems
+
