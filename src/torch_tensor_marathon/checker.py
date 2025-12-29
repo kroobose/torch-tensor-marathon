@@ -58,6 +58,7 @@ class CorrectnessChecker:
         """
         # Execute expected solution
         try:
+            torch.manual_seed(42)  # Ensure deterministic setup
             expected_namespace = self._execute_code(
                 setup_code + "\n" + solution_code
             )
@@ -70,6 +71,7 @@ class CorrectnessChecker:
 
         # Execute user solution
         try:
+            torch.manual_seed(42)  # Ensure deterministic setup
             user_namespace, stdout = self._execute_code_with_output(
                 setup_code + "\n" + user_code
             )
