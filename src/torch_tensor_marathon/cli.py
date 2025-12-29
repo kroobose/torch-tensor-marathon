@@ -205,7 +205,7 @@ class TensorMarathonCLI:
         if result.is_correct:
             console.print(Panel(
                 f"[bold green]{t('correct', lang)}[/bold green]\n\n"
-                f"Shape: {result.expected_shape}",
+                f"{t('result_shape', lang)}: {result.actual_shape}",
                 title="✅ Success",
                 border_style="green",
                 box=box.DOUBLE

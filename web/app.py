@@ -228,36 +228,7 @@ async def check_gemini_enabled():
     return {"enabled": gemini_client.enabled}
 
 
-@app.post("/api/gemini/explain")
-async def explain_solution(request: ExplanationRequest):
-    """Generate an AI explanation of a solution."""
-    if not gemini_client.enabled:
-        raise HTTPException(status_code=503, detail="Gemini API not enabled")
 
-    problem = problem_bank.get_problem(request.problem_id)
-    if not problem:
-        raise HTTPException(status_code=404, detail="Problem not found")
-
-    title = problem.title_ja if request.language == "ja" else problem.title_en
-    description = problem.description_ja if request.language == "ja" else problem.description_en
-    code_to_explain = request.user_code or problem.solution_code
-
-    try:
-        explanation = gemini_client.explain_solution(
-            problem_title=title,
-            problem_description=description,
-            setup_code=problem.setup_code,
-            solution_code=code_to_explain,
-            language=request.language
-        )
-
-        if not explanation:
-            raise HTTPException(status_code=500, detail="Failed to generate explanation: Empty response")
-
-        return {"explanation": explanation}
-    except Exception as e:
-        print(f"Gemini API Error (Explanation): {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Gemini API Error: {str(e)}")
 
 
 @app.post("/api/gemini/hint")

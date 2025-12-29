@@ -22,56 +22,7 @@ class GeminiClient:
             # Use lightweight flash model for cost efficiency
             self.model = genai.GenerativeModel('gemini-3-flash-preview')
 
-    def explain_solution(
-        self,
-        problem_title: str,
-        problem_description: str,
-        setup_code: str,
-        solution_code: str,
-        language: str = "ja"
-    ) -> Optional[str]:
-        """Generate an AI-powered explanation of the solution.
 
-        Args:
-            problem_title: Problem title
-            problem_description: Problem description
-            setup_code: Setup code
-            solution_code: Solution code to explain
-            language: Language for explanation ("ja" or "en")
-
-        Returns:
-            Detailed explanation string, or None if disabled
-        """
-        if not self.enabled:
-            return None
-
-        prompt = f"""Explain this PyTorch tensor solution in detail for a learner.
-
-Problem: {problem_title}
-Description: {problem_description}
-
-Setup Code:
-```python
-{setup_code}
-```
-
-Solution:
-```python
-{solution_code}
-```
-
-Provide a clear, educational explanation that covers:
-1. What the solution does step-by-step
-2. Why this approach works
-3. Key PyTorch concepts used
-4. Any potential pitfalls or alternatives
-
-Respond in {"Japanese" if language == "ja" else "English"}.
-Keep it concise but thorough (3-5 paragraphs).
-"""
-
-        response = self.model.generate_content(prompt)
-        return response.text
 
     def generate_hint(
         self,
@@ -98,7 +49,7 @@ Keep it concise but thorough (3-5 paragraphs).
 
         user_attempt = f"\n\nUser's current attempt:\n```python\n{user_code}\n```" if user_code else ""
 
-        prompt = f"""Provide a helpful hint for this PyTorch tensor problem. Don't give away the full solution, but guide the learner in the right direction.
+        prompt = f"""Provide a helpful hint for this PyTorch tensor problem. Don't give away the full solution code immediately, but guide the learner.
 
 Problem: {problem_title}
 Description: {problem_description}
@@ -106,13 +57,15 @@ Description: {problem_description}
 Setup Code:
 ```python
 {setup_code}
-```{user_attempt}
+```
+{user_attempt}
 
 Provide 2-3 hints that:
 1. Guide toward the right PyTorch functions/operations
 2. Explain relevant tensor concepts
-3. Suggest the general approach without revealing the exact code
+3. **Important**: Briefly suggest an alternative approach or solution if one exists ("別解" / "Alternative").
 
+Format your response using Markdown (use lists, bold text, code blocks).
 Respond in {"Japanese" if language == "ja" else "English"}.
 Be encouraging and educational.
 """

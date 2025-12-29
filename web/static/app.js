@@ -74,6 +74,13 @@ function setupEventListeners() {
     // Hint button
     document.getElementById('hint-btn').addEventListener('click', () => {
         const hintBox = document.getElementById('hint-box');
+        // Always reset to original hint text when toggling manually
+        if (state.currentProblem) {
+            const hintText = state.currentProblem['hint_' + state.currentLang];
+            // Parse markdown if marked is available
+            const hintContent = typeof marked !== 'undefined' ? marked.parse(hintText) : hintText;
+            hintBox.innerHTML = `<strong>${state.currentLang === 'ja' ? 'ヒント' : 'Hint'}:</strong><br><div class="markdown-content">${hintContent}</div>`;
+        }
         hintBox.classList.toggle('hidden');
     });
 
@@ -322,7 +329,15 @@ function showResult(isCorrect, message, details = {}) {
             messageHtml = message;
         }
     } else {
-        messageHtml = message;
+        // Success case - add shape info
+        messageHtml = `<div>${message}</div>`;
+
+        if (details.actual_shape) {
+            messageHtml += `<div class="success-detail" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.2);">
+                <strong>${state.currentLang === 'ja' ? '結果の形状' : 'Result Shape'}:</strong>
+                <code>${JSON.stringify(details.actual_shape)}</code>
+            </div>`;
+        }
     }
 
     resultMessage.innerHTML = messageHtml;
@@ -458,33 +473,7 @@ function updateGeminiUI() {
 
 
 
-async function explainSolution() {
-    if (!state.currentProblem || !geminiEnabled) return;
 
-    showLoading(true);
-    try {
-        const userCode = document.getElementById('user-code').value.trim();
-        const response = await fetch(`${API_BASE}/api/gemini/explain`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                problem_id: state.currentProblem.id,
-                language: state.currentLang,
-                user_code: userCode || null
-            })
-        });
-
-        if (!response.ok) throw new Error('Failed to generate explanation');
-
-        const data = await response.json();
-        showResult(true, `🤖 AI ${state.currentLang === 'ja' ? '解説' : 'Explanation'}:\n\n${data.explanation}`);
-    } catch (error) {
-        console.error('Error generating explanation:', error);
-        showResult(false, state.currentLang === 'ja' ? '解説の生成に失敗しました' : 'Failed to generate explanation');
-    } finally {
-        showLoading(false);
-    }
-}
 
 async function getAIHint() {
     if (!state.currentProblem || !geminiEnabled) return;
@@ -506,7 +495,9 @@ async function getAIHint() {
 
         const data = await response.json();
         const hintBox = document.getElementById('hint-box');
-        hintBox.innerHTML = `<strong>🤖 AI Hint:</strong><br>${data.hint}`;
+        // Parse markdown if marked is available
+        const hintContent = typeof marked !== 'undefined' ? marked.parse(data.hint) : data.hint;
+        hintBox.innerHTML = `<strong>🤖 AI Hint:</strong><br><div class="markdown-content">${hintContent}</div>`;
         hintBox.classList.remove('hidden');
     } catch (error) {
         console.error('Error generating hint:', error);

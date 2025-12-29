@@ -132,6 +132,10 @@ TRANSLATIONS: Dict[str, Dict[Language, str]] = {
         "ja": "期待される形状",
         "en": "Expected Shape",
     },
+    "result_shape": {
+        "ja": "結果の形状",
+        "en": "Result Shape",
+    },
 }
 
 

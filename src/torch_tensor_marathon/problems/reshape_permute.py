@@ -20,7 +20,8 @@ def get_reshape_permute_problems() -> List[Problem]:
             hint_ja="view() または reshape() を使用します。",
             hint_en="Use view() or reshape().",
             setup_code="x = torch.arange(12)",
-            solution_code="result = x.view(3, 4)",
+            solution_code="""result = x.view(3, 4)
+# Alternative: result = x.reshape(3, 4)""",
             tags=["reshape", "view", "2d"],
         ),
 
@@ -35,7 +36,8 @@ def get_reshape_permute_problems() -> List[Problem]:
             hint_ja="view(-1) または flatten() を使用します。",
             hint_en="Use view(-1) or flatten().",
             setup_code="x = torch.randn(4, 5)",
-            solution_code="result = x.view(-1)",
+            solution_code="""result = x.view(-1)
+# Alternative: result = x.flatten()""",
             tags=["flatten", "view", "1d"],
         ),
 
@@ -50,7 +52,8 @@ def get_reshape_permute_problems() -> List[Problem]:
             hint_ja="unsqueeze(0) を使用します。",
             hint_en="Use unsqueeze(0).",
             setup_code="x = torch.randn(3, 224, 224)",
-            solution_code="result = x.unsqueeze(0)",
+            solution_code="""result = x.unsqueeze(0)
+# Alternative: result = x[None, ...]""",
             tags=["unsqueeze", "batch", "cv"],
         ),
 
@@ -65,7 +68,8 @@ def get_reshape_permute_problems() -> List[Problem]:
             hint_ja="transpose(0, 1) または .T を使用します。",
             hint_en="Use transpose(0, 1) or .T.",
             setup_code="x = torch.randn(3, 5)",
-            solution_code="result = x.transpose(0, 1)",
+            solution_code="""result = x.transpose(0, 1)
+# Alternative: result = x.T""",
             tags=["transpose", "2d"],
         ),
 
@@ -111,7 +115,8 @@ def get_reshape_permute_problems() -> List[Problem]:
             hint_ja="view() または reshape() を使用します。",
             hint_en="Use view() or reshape().",
             setup_code="x = torch.randn(4, 6, 8)",
-            solution_code="result = x.view(2, 12, 8)",
+            solution_code="""result = x.view(2, 12, 8)
+# Alternative: result = x.reshape(2, 12, 8)""",
             tags=["reshape", "3d"],
         ),
 
@@ -207,7 +212,8 @@ x_reshaped = x.view(1, 3, 14, 16, 14, 16)
 # Permute to (1, 14, 14, 3, 16, 16)
 x_permuted = x_reshaped.permute(0, 2, 4, 1, 3, 5)
 # Flatten patches: (1, 196, 768)
-result = x_permuted.reshape(1, 14*14, 3*16*16)""",
+result = x_permuted.reshape(1, 14*14, 3*16*16)
+# Note: Alternatively, use torch.nn.Unfold""",
             tags=["reshape", "permute", "vit", "patches", "cv"],
         ),
 
